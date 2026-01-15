@@ -1,5 +1,10 @@
 import pytest
 from app.utils.text_extractor import extract_text
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+
+
+# --- Testes Existentes ---
 
 def test_none_input_returns_empty_string():
     """Testa se a entrada None retorna uma string vazia."""
@@ -38,7 +43,7 @@ def test_html_with_line_breaks_and_entities():
 def test_text_with_extra_spaces_and_tabs():
     """Testa se espaços extras e tabulações são tratados e se o espaço em branco inicial/final é removido."""
     text = "  Olá   Mundo\t!  \n"
-    expected_text = "  Olá   Mundo\t!  \n" 
+    expected_text = "  Olá   Mundo\t!  \n"
     assert extract_text(text) == expected_text.strip() 
 
 def test_unexpected_input_types_return_empty_string():
@@ -71,6 +76,8 @@ def test_malformed_html_no_exception():
     malformed_html = "<div><p>Tag não fechada<div>Texto normal."
     expected_text = "Tag não fechadaTexto normal."
     assert extract_text(malformed_html) == expected_text
+
+# --- Testes para .txt ---
 
 def test_extract_text_from_valid_txt_file(tmp_path):
     """Testa a extração de texto a partir de um arquivo .txt válido."""
@@ -105,3 +112,48 @@ def test_path_not_ending_in_txt_is_treated_as_string(tmp_path):
     # A função não deve ler o arquivo, mas sim tratar o caminho como texto puro.
     # O HTML extractor não fará nada, então o resultado deve ser o próprio caminho.
     assert extract_text(str(p)) == str(p)
+
+# --- Novos Testes para .pdf ---
+
+def _create_pdf(path, text_content=None):
+    """Gera um PDF simples para testes."""
+    c = canvas.Canvas(str(path), pagesize=letter)
+    if text_content:
+        text_object = c.beginText()
+        text_object.setTextOrigin(72, 800)  # Posição do texto
+        text_object.setFont("Helvetica", 10)
+        text_object.textLines(text_content)
+        c.drawText(text_object)
+    c.save()
+
+def test_extract_text_from_valid_pdf_file(tmp_path):
+    """Testa a extração de texto a partir de um arquivo PDF válido."""
+    pdf_path = tmp_path / "valid.pdf"
+    content = "Este é o conteúdo de um arquivo PDF."
+    _create_pdf(pdf_path, text_content=content)
+    
+    extracted_text = extract_text(str(pdf_path))
+    assert content in extracted_text
+
+def test_extract_text_from_empty_pdf_returns_empty_string(tmp_path):
+    """Testa se um PDF com uma página em branco (sem texto) retorna string vazia."""
+    pdf_path = tmp_path / "blank.pdf"
+    _create_pdf(pdf_path, text_content=None)
+    assert extract_text(str(pdf_path)) == ""
+
+def test_non_existent_pdf_file_path_returns_empty_string(tmp_path):
+    """Testa se o caminho para um arquivo PDF inexistente retorna string vazia."""
+    pdf_path = tmp_path / "non_existent.pdf"
+    assert extract_text(str(pdf_path)) == ""
+
+def test_path_not_ending_in_pdf_is_not_processed_as_pdf(tmp_path):
+    """Testa se um arquivo que não termina em .pdf não é processado como PDF."""
+    file_path = tmp_path / "document.log"
+    _create_pdf(file_path, text_content="Conteúdo secreto")
+    assert extract_text(str(file_path)) == str(file_path)
+
+def test_corrupted_pdf_file_returns_empty_string(tmp_path):
+    """Testa se um arquivo PDF corrompido retorna uma string vazia."""
+    pdf_path = tmp_path / "corrupted.pdf"
+    pdf_path.write_text("%PDF-1.x\n...junk...\n")
+    assert extract_text(str(pdf_path)) == ""
