@@ -37,16 +37,6 @@ def test_newlines_are_preserved_within_text():
 def test_full_preprocessing_pipeline_on_complex_string():
     """Testa o pipeline completo com uma string complexa."""
     input_text = "  \tUM TEXTO\n\n\nCOM\x0cMÚLTIPLOS\x08 PROBLEMAS  \n"
-    # 1. Lowercase: "  \tum texto\n\n\ncom\x0cmúltiplos\x08 problemas  \n"
-    # 2. Remove control chars: "  \tum texto\n\n\ncommúltiplos problemas  \n"
-    # 3. Normalize whitespace: " um texto\n\n\ncommúltiplos problemas \n"
-    # 4. Strip: "um texto\n\n\ncommúltiplos problemas"
-    # Meu código atual não colapsa newlines, então o resultado será um pouco diferente.
-    # re.sub(r'[ \t]+', ' ', text) -> " um texto\n\n\ncom\x0cmúltiplos\x08 problemas \n"
-    # strip() -> "um texto\n\n\ncom\x0cmúltiplos\x08 problemas"
-    # com a remoção de controle: "um texto\n\n\ncommúltiplos problemas"
-
-    # A implementação atual não colapsa `\n`, então a expectativa precisa refletir isso.
     expected = "um texto\n\n\ncommúltiplos problemas"
     assert preprocess_text(input_text) == expected
 
@@ -56,3 +46,39 @@ def test_preprocessing_is_idempotent():
     processed_once = preprocess_text(input_text)
     processed_twice = preprocess_text(processed_once)
     assert processed_once == processed_twice
+
+# --- Testes para Remoção de Stopwords ---
+
+def test_stopwords_are_not_removed_by_default():
+    """Testa se as stopwords NÃO são removidas se a opção não for passada."""
+    input_text = "este é um teste com stopwords"
+    # O comportamento padrão é normalizar, mas não remover.
+    expected = "este é um teste com stopwords"
+    assert preprocess_text(input_text) == expected
+    assert preprocess_text(input_text, remove_stopwords=False) == expected
+
+def test_stopwords_are_removed_when_option_is_true():
+    """Testa a remoção básica de stopwords quando a opção é ativada."""
+    input_text = "este é um teste com algumas stopwords"
+    expected = "teste algumas stopwords"
+    assert preprocess_text(input_text, remove_stopwords=True) == expected
+
+def test_text_with_only_stopwords_returns_empty_string():
+    """Testa se uma string contendo apenas stopwords resulta em uma string vazia."""
+    input_text = "com de para em"
+    expected = ""
+    assert preprocess_text(input_text, remove_stopwords=True) == expected
+
+def test_stopword_removal_is_case_insensitive():
+    """Testa se a remoção de stopwords funciona independentemente da capitalização."""
+    # O texto é primeiro convertido para minúsculas, depois as stopwords são removidas.
+    input_text = "Este É UM teste"
+    expected = "teste"
+    assert preprocess_text(input_text, remove_stopwords=True) == expected
+
+def test_stopword_removal_does_not_match_substrings():
+    """Testa se a remoção não afeta palavras que contêm stopwords como substrings."""
+    # "ser" é uma stopword, mas "série" e "serviço" não devem ser removidas.
+    input_text = "gostaria de ser notificado sobre a série e o serviço"
+    expected = "gostaria notificado sobre série serviço"
+    assert preprocess_text(input_text, remove_stopwords=True) == expected
