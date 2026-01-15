@@ -7,3 +7,13 @@ requires-python = ">=3.10"
 dependencies = [
     "fastapi[standard]>=0.128.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
