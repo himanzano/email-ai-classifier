@@ -71,3 +71,37 @@ def test_malformed_html_no_exception():
     malformed_html = "<div><p>Tag não fechada<div>Texto normal."
     expected_text = "Tag não fechadaTexto normal."
     assert extract_text(malformed_html) == expected_text
+
+def test_extract_text_from_valid_txt_file(tmp_path):
+    """Testa a extração de texto a partir de um arquivo .txt válido."""
+    p = tmp_path / "arquivo_valido.txt"
+    conteudo = "Olá, mundo!"
+    p.write_text(conteudo, encoding="utf-8")
+    assert extract_text(str(p)) == conteudo
+
+def test_extract_text_from_empty_txt_file(tmp_path):
+    """Testa se um arquivo .txt vazio retorna uma string vazia."""
+    p = tmp_path / "arquivo_vazio.txt"
+    p.touch()
+    assert extract_text(str(p)) == ""
+
+def test_non_existent_txt_file_path_returns_empty_string(tmp_path):
+    """Testa se o caminho para um arquivo .txt inexistente retorna uma string vazia."""
+    p = tmp_path / "arquivo_inexistente.txt"
+    assert extract_text(str(p)) == ""
+
+def test_txt_file_with_html_content_is_cleaned(tmp_path):
+    """Testa se um arquivo .txt contendo HTML tem as tags removidas."""
+    p = tmp_path / "arquivo_com_html.txt"
+    conteudo_html = "<h1>Título</h1><p>Texto com <b>negrito</b>.</p>"
+    conteudo_esperado = "TítuloTexto com negrito."
+    p.write_text(conteudo_html, encoding="utf-8")
+    assert extract_text(str(p)) == conteudo_esperado
+
+def test_path_not_ending_in_txt_is_treated_as_string(tmp_path):
+    """Testa se uma entrada que aponta para um arquivo que não é .txt é tratada como string."""
+    p = tmp_path / "nao_e_um_txt.log"
+    p.write_text("Conteúdo que não deve ser lido.", encoding="utf-8")
+    # A função não deve ler o arquivo, mas sim tratar o caminho como texto puro.
+    # O HTML extractor não fará nada, então o resultado deve ser o próprio caminho.
+    assert extract_text(str(p)) == str(p)
