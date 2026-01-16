@@ -131,8 +131,8 @@ def test_preprocess_text_lemmatization_after_stopwords():
     """
     input_text = "Os gatos e os cães são animais fofos."
     # 1. remove_stopwords: "gatos cães animais fofos."
-    # 2. lemmatize: "gato cãe animai fofo." (comportamento esperado da heurística)
-    expected = "gato cãe animai fofo."
+    # 2. lemmatize: "gato cão animai fofo." (comportamento esperado da heurística)
+    expected = "gato cão animai fofo."
     assert preprocess_text(input_text, remove_stopwords=True, lemmatize=True) == expected
 
 def test_preprocess_text_lemmatization_preserves_word_order():
