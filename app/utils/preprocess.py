@@ -36,6 +36,58 @@ _STOPWORD_LISTS: Dict[str, Set[str]] = {
     "pt": _STOPWORDS_PT,
 }
 
+# --- Lematização Heurística Simplificada ---
+# NOTA: Esta é uma implementação básica e heurística de lematização,
+# focada em sufixos comuns do português. Não substitui uma biblioteca
+# completa de NLP (como NLTK ou spaCy), mas evita dependências externas.
+# Foi projetada para ser simples, previsível e extensível.
+
+def _lemmatize_token_pt(token: str) -> str:
+    """
+    Aplica regras simples e heurísticas de lematização para um token em português.
+    A ordem é importante: regras mais específicas devem vir antes.
+    """
+    # Regra para plurais em '-es' (ex: autores -> autor, flores -> flor).
+    # É mais específica que a regra do '-s', por isso vem primeiro.
+    if len(token) > 4 and token.endswith('es'):
+        return token[:-2]
+
+    # Regra para plurais simples terminados em 's' (ex: carros -> carro, testes -> teste).
+    if len(token) > 3 and token.endswith('s'):
+        return token[:-1]
+
+    # Nenhuma regra correspondeu, retorna o token original.
+    return token
+
+_LEMMATIZER_FUNCTIONS: Dict[str, Callable[[str], str]] = {
+    "pt": _lemmatize_token_pt,
+}
+
+def _lemmatize_text(text: str, lang: str = 'pt') -> str:
+    """
+    Aplica a lematização em todo o texto, token por token, usando a função
+    apropriada para o idioma e preservando a pontuação final de cada token.
+    """
+    lemmatizer = _LEMMATIZER_FUNCTIONS.get(lang)
+    if not lemmatizer or not text:
+        return text
+
+    words = text.split(' ')
+    lemmatized_words = []
+    for word in words:
+        # Isola a palavra da pontuação final usando regex
+        match = re.match(r'^(\w+)([\W_]*)$', word)
+        if match:
+            token, punctuation = match.groups()
+            lemmatized_token = lemmatizer(token)
+            lemmatized_words.append(lemmatized_token + punctuation)
+        else:
+            # Se não houver correspondência (ex: uma string de pontuação pura), mantém o original
+            lemmatized_words.append(word)
+
+    return ' '.join(lemmatized_words)
+
+
 # --- Etapas de Pré-processamento ---
 
 ProcessingStep = Callable[[str], str]
@@ -69,9 +121,9 @@ class TextPreprocessor:
         ]
         self.stopword_lists = stopword_lists or _STOPWORD_LISTS
 
-    def process(self, text: str, remove_stopwords: bool = False, lang: str = 'pt') -> str:
+    def process(self, text: str, remove_stopwords: bool = False, lang: str = 'pt', lemmatize: bool = False) -> str:
         """
-        Aplica o pipeline de processamento, com opção de remover stopwords.
+        Aplica o pipeline de processamento, com opção de remover stopwords e lematizar.
         """
         processed_text = text
         for step in self.base_steps:
@@ -82,24 +134,28 @@ class TextPreprocessor:
             if stopwords_to_remove:
                 processed_text = _remove_stopwords(processed_text, stopwords_to_remove)
         
+        if lemmatize:
+            processed_text = _lemmatize_text(processed_text, lang=lang)
+
         return processed_text
 
 # --- Função Pública ---
 
 _default_preprocessor = TextPreprocessor()
 
-def preprocess_text(text: Optional[str], remove_stopwords: bool = False) -> str:
+def preprocess_text(text: Optional[str], remove_stopwords: bool = False, lemmatize: bool = False) -> str:
     """
     Função pública para pré-processar um texto usando o pipeline padrão.
 
     Args:
         text: A string de entrada a ser processada, ou None.
         remove_stopwords: Se True, remove as stopwords do idioma padrão (pt).
+        lemmatize: Se True, aplica lematização heurística ao texto.
 
     Returns:
-        O texto limpo e normalizado.
+        O texto limpo, normalizado e opcionalmente lematizado.
     """
     if not isinstance(text, str):
         return ""
     
-    return _default_preprocessor.process(text, remove_stopwords=remove_stopwords)
+    return _default_preprocessor.process(text, remove_stopwords=remove_stopwords, lemmatize=lemmatize)
