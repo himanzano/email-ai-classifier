@@ -10,7 +10,7 @@ from vertexai.generative_models import GenerativeModel, GenerationConfig
 # garantir portabilidade entre ambientes (local, dev, prod).
 PROJECT_ID = os.getenv("GCP_PROJECT_ID")
 LOCATION = os.getenv("GCP_LOCATION", "us-central1")
-MODEL_NAME = "gemini-1.5-pro-001"
+MODEL_NAME = "gemini-2.5-pro"
 
 # Inicializa o Vertex AI SDK. A autenticação é tratada automaticamente
 # pelo ambiente (gcloud auth application-default login, variáveis de ambiente, etc.).
