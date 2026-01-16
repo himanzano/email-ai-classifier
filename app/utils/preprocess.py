@@ -49,11 +49,13 @@ def _lemmatize_token_pt(token: str) -> str:
     """
     # Regra para plurais em '-es' (ex: autores -> autor, flores -> flor).
     # É mais específica que a regra do '-s', por isso vem primeiro.
-    if len(token) > 4 and token.endswith('es'):
+    if token.endswith("ães"):
+        return token[:-3] + "ão"
+    if len(token) >= 4 and token.endswith('es'):
         return token[:-2]
 
     # Regra para plurais simples terminados em 's' (ex: carros -> carro, testes -> teste).
-    if len(token) > 3 and token.endswith('s'):
+    if len(token) > 3 and token.endswith('s') and not token.endswith('es'):
         return token[:-1]
 
     # Nenhuma regra correspondeu, retorna o token original.
@@ -88,6 +90,20 @@ def _lemmatize_text(text: str, lang: str = 'pt') -> str:
     return ' '.join(lemmatized_words)
 
 
+# --- Normalização de Entidades ---
+
+def _normalize_numbers(text: str) -> str:
+    """
+    Substitui vários formatos de números por um token semântico <NUM>.
+    Exemplos: 10, 10.5, 1.000, 1,000.50 são convertidos para <NUM>.
+    Projetado para ser extensível para outras entidades (moeda, data).
+    """
+    # Regex para encontrar números, incluindo aqueles com separadores de milhar ([.,])
+    # e parte decimal. Usa limites de palavra (\b) para evitar substituição dentro de outras palavras.
+    number_pattern = r'\b\d+(?:[.,]\d+)*\b'
+    return re.sub(number_pattern, '<NUM>', text)
+
+
 # --- Etapas de Pré-processamento ---
 
 ProcessingStep = Callable[[str], str]
@@ -115,20 +131,28 @@ class TextPreprocessor:
     """
     def __init__(self, base_steps: Optional[List[ProcessingStep]] = None, stopword_lists: Optional[Dict[str, Set[str]]] = None):
         self.base_steps = base_steps or [
-            _to_lowercase,
             _remove_control_characters,
             _normalize_whitespace,
         ]
         self.stopword_lists = stopword_lists or _STOPWORD_LISTS
 
-    def process(self, text: str, remove_stopwords: bool = False, lang: str = 'pt', lemmatize: bool = False) -> str:
+    def process(self, text: str, lowercase: bool = True, remove_stopwords: bool = False, lang: str = 'pt', lemmatize: bool = False, normalize_numbers: bool = False) -> str:
         """
-        Aplica o pipeline de processamento, com opção de remover stopwords e lematizar.
+        Aplica o pipeline de processamento, com opções configuráveis.
         """
         processed_text = text
+
+        if lowercase:
+            processed_text = _to_lowercase(processed_text)
+
         for step in self.base_steps:
             processed_text = step(processed_text)
 
+        # Etapa opcional de normalização de entidades (ex: números)
+        if normalize_numbers:
+            processed_text = _normalize_numbers(processed_text)
+
+        # Etapas opcionais de remoção e transformação de palavras
         if remove_stopwords:
             stopwords_to_remove = self.stopword_lists.get(lang)
             if stopwords_to_remove:
@@ -143,19 +167,27 @@ class TextPreprocessor:
 
 _default_preprocessor = TextPreprocessor()
 
-def preprocess_text(text: Optional[str], remove_stopwords: bool = False, lemmatize: bool = False) -> str:
+def preprocess_text(text: Optional[str], lowercase: bool = True, remove_stopwords: bool = False, lemmatize: bool = False, normalize_numbers: bool = False) -> str:
     """
     Função pública para pré-processar um texto usando o pipeline padrão.
 
     Args:
         text: A string de entrada a ser processada, ou None.
+        lowercase: Se True, converte o texto para minúsculas.
         remove_stopwords: Se True, remove as stopwords do idioma padrão (pt).
         lemmatize: Se True, aplica lematização heurística ao texto.
+        normalize_numbers: Se True, normaliza os números para um token <NUM>.
 
     Returns:
-        O texto limpo, normalizado e opcionalmente lematizado.
+        O texto limpo, normalizado e opcionalmente modificado.
     """
     if not isinstance(text, str):
         return ""
     
-    return _default_preprocessor.process(text, remove_stopwords=remove_stopwords, lemmatize=lemmatize)
+    return _default_preprocessor.process(
+        text,
+        lowercase=lowercase,
+        remove_stopwords=remove_stopwords,
+        lemmatize=lemmatize,
+        normalize_numbers=normalize_numbers
+    )
