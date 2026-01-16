@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisador de E-mails com IA</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Ícones (Heroicons) -->
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        // Configuração customizada do Tailwind (opcional, mas bom para design system)
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-primary': '#1e40af', // Azul corporativo escuro
+                        'brand-secondary': '#3b82f6', // Azul corporativo claro
+                        'status-productive': '#16a34a', // Verde para 'Produtivo'
+                        'status-improductive': '#64748b', // Cinza para 'Improdutivo'
+                        'base-100': '#f8fafc',
+                        'base-200': '#e2e8f0',
+                        'base-300': '#cbd5e1',
+                        'text-primary': '#1e293b',
+                        'text-secondary': '#475569',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-base-100 text-text-primary antialiased">
+
+    <div class="container mx-auto px-4 py-8 md:py-16 max-w-4xl">
+
+        <!-- Cabeçalho -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tight">Analisador de E-mails com IA</h1>
+            <p class="mt-4 text-lg text-text-secondary">
+                Classifique e-mails e gere respostas automáticas usando o poder do Gemini.
+            </p>
+        </header>
+
+        <main>
+            <!-- Indicador de Fluxo -->
+            <div id="flow-indicator" class="flex items-center justify-center space-x-4 md:space-x-8 mb-12">
+                <div class="step active" data-step="1">
+                    <div class="step-icon">1</div>
+                    <span class="step-label">Entrada</span>
+                </div>
+                <div class="step-separator"></div>
+                <div class="step" data-step="2">
+                    <div class="step-icon">2</div>
+                    <span class="step-label">Classificação</span>
+                </div>
+                <div class="step-separator"></div>
+                <div class="step" data-step="3">
+                    <div class="step-icon">3</div>
+                    <span class="step-label">Resposta</span>
+                </div>
+            </div>
+
+            <!-- Formulário Principal -->
+            <form id="email-form" class="bg-white p-8 rounded-2xl shadow-lg border border-base-200">
+                <div class="mb-6">
+                    <label for="email-content" class="block text-lg font-semibold mb-2">Conteúdo do E-mail</label>
+                    <textarea id="email-content" rows="10" class="w-full p-4 border border-base-300 rounded-lg focus:ring-2 focus:ring-brand-secondary focus:border-transparent transition duration-300" placeholder="Cole o conteúdo do seu e-mail aqui..."></textarea>
+                </div>
+
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="w-full md:w-auto">
+                        <label for="file-upload" class="file-upload-btn">
+                            <ion-icon name="cloud-upload-outline"></ion-icon>
+                            <span>Anexar arquivo (.txt)</span>
+                            <input id="file-upload" type="file" class="hidden" accept=".txt">
+                        </label>
+                        <p id="file-name" class="text-sm text-text-secondary mt-2"></p>
+                    </div>
+                    <button id="submit-btn" type="submit" class="submit-btn">
+                        Analisar e Gerar Resposta
+                    </button>
+                </div>
+            </form>
+
+            <!-- Seção de Resultados (inicialmente oculta) -->
+            <div id="result-section" class="mt-12 hidden">
+                <!-- Estado de Carregamento -->
+                <div id="loading-state" class="text-center p-8 bg-white rounded-2xl shadow-lg border border-base-200 flex flex-col items-center justify-center hidden">
+                    <div class="spinner"></div>
+                    <p class="mt-4 text-lg font-semibold text-text-secondary">Analisando e-mail e gerando resposta...</p>
+                    <p class="text-sm text-text-secondary">Isso pode levar alguns segundos.</p>
+                </div>
+
+                <!-- Estado de Erro -->
+                <div id="error-state" class="text-center p-8 bg-red-50 border-l-4 border-red-500 rounded-lg shadow-md hidden">
+                    <h3 class="text-xl font-bold text-red-800">Ocorreu um Erro</h3>
+                    <p id="error-message" class="mt-2 text-red-700"></p>
+                    <button id="try-again-btn" class="mt-6 try-again-btn">Tentar Novamente</button>
+                </div>
+
+                <!-- Estado de Sucesso -->
+                <div id="success-state" class="hidden">
+                    <!-- Badge de Classificação -->
+                    <div class="flex items-center justify-center gap-4 mb-8">
+                        <h2 class="text-2xl font-bold">Classificação:</h2>
+                        <span id="category-badge" class="badge"></span>
+                    </div>
+
+                    <!-- Resposta Gerada -->
+                    <div class="bg-white p-8 rounded-2xl shadow-lg border border-base-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-xl font-semibold">Resposta Sugerida</h3>
+                            <button id="copy-btn" class="copy-btn">
+                                <ion-icon name="clipboard-outline"></ion-icon>
+                                <span>Copiar</span>
+                            </button>
+                        </div>
+                        <div id="response-text" class="p-4 bg-base-100 rounded-lg text-text-secondary whitespace-pre-wrap"></div>
+                    </div>
+                    <div class="text-center mt-8">
+                         <button id="analyze-another-btn" class="submit-btn">Analisar Outro E-mail</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Rodapé -->
+        <footer class="text-center mt-16 text-text-secondary">
+            <p>&copy; 2024 - Projeto de Classificação de E-mails com Gemini e Google Cloud.</p>
+            <p>Uma demonstração de engenharia de software e integração de IA.</p>
+        </footer>
+    </div>
+
+    <!-- Script principal -->
+    <script src="script.js"></script>
+</body>
+</html>
