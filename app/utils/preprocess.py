@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Callable, List, Dict, Set
+from typing import Optional, Callable, List, Dict, Set, Union, overload, Literal
 
 # --- Stopwords (Extensível para múltiplos idiomas) ---
 
@@ -104,12 +104,37 @@ def _normalize_numbers(text: str) -> str:
     return re.sub(number_pattern, '<NUM>', text)
 
 
+# --- Tokenização ---
+
+def tokenize_text(text: str) -> List[str]:
+    """
+    Tokeniza o texto, separando palavras e preservando tokens especiais.
+    """
+    if not text.strip():
+        return []
+    # Regex para encontrar tokens especiais (ex: <NUM>) ou sequências de caracteres de palavras.
+    token_pattern = r'<[^>]+>\%?|\d+(?:[.,]\d+)*|\w+'
+    return re.findall(token_pattern, text)
+
 # --- Etapas de Pré-processamento ---
 
 ProcessingStep = Callable[[str], str]
 
 def _to_lowercase(text: str) -> str:
-    return text.lower()
+    special_tokens = re.findall(r'<[^>]+>\%?', text)
+    placeholders = [f"__PLACEHOLDER_{i}__" for i, _ in enumerate(special_tokens)]
+    
+    temp_text = text
+    for token, placeholder in zip(special_tokens, placeholders):
+        temp_text = temp_text.replace(token, placeholder, 1)
+        
+    temp_text_lowercased = temp_text.lower()
+    
+    final_text = temp_text_lowercased
+    for token, placeholder in zip(special_tokens, placeholders):
+        final_text = final_text.replace(placeholder.lower(), token, 1)
+        
+    return final_text
 
 def _remove_control_characters(text: str) -> str:
     return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
@@ -136,7 +161,13 @@ class TextPreprocessor:
         ]
         self.stopword_lists = stopword_lists or _STOPWORD_LISTS
 
-    def process(self, text: str, lowercase: bool = True, remove_stopwords: bool = False, lang: str = 'pt', lemmatize: bool = False, normalize_numbers: bool = False) -> str:
+    @overload
+    def process(self, text: str, lowercase: bool = True, remove_stopwords: bool = False, lang: str = 'pt', lemmatize: bool = False, normalize_numbers: bool = False, *, tokenize: Literal[True]) -> List[str]: ...
+
+    @overload
+    def process(self, text: str, lowercase: bool = True, remove_stopwords: bool = False, lang: str = 'pt', lemmatize: bool = False, normalize_numbers: bool = False, tokenize: Literal[False] = False) -> str: ...
+
+    def process(self, text: str, lowercase: bool = True, remove_stopwords: bool = False, lang: str = 'pt', lemmatize: bool = False, normalize_numbers: bool = False, tokenize: bool = False) -> Union[str, List[str]]:
         """
         Aplica o pipeline de processamento, com opções configuráveis.
         """
@@ -161,13 +192,22 @@ class TextPreprocessor:
         if lemmatize:
             processed_text = _lemmatize_text(processed_text, lang=lang)
 
+        if tokenize:
+            return tokenize_text(processed_text)
+
         return processed_text
 
 # --- Função Pública ---
 
 _default_preprocessor = TextPreprocessor()
 
-def preprocess_text(text: Optional[str], lowercase: bool = True, remove_stopwords: bool = False, lemmatize: bool = False, normalize_numbers: bool = False) -> str:
+@overload
+def preprocess_text(text: Optional[str], lowercase: bool = True, remove_stopwords: bool = False, lemmatize: bool = False, normalize_numbers: bool = False, *, tokenize: Literal[True]) -> List[str]: ...
+
+@overload
+def preprocess_text(text: Optional[str], lowercase: bool = True, remove_stopwords: bool = False, lemmatize: bool = False, normalize_numbers: bool = False, tokenize: Literal[False] = False) -> str: ...
+
+def preprocess_text(text: Optional[str], lowercase: bool = True, remove_stopwords: bool = False, lemmatize: bool = False, normalize_numbers: bool = False, tokenize: bool = False) -> Union[str, List[str]]:
     """
     Função pública para pré-processar um texto usando o pipeline padrão.
 
@@ -177,17 +217,19 @@ def preprocess_text(text: Optional[str], lowercase: bool = True, remove_stopword
         remove_stopwords: Se True, remove as stopwords do idioma padrão (pt).
         lemmatize: Se True, aplica lematização heurística ao texto.
         normalize_numbers: Se True, normaliza os números para um token <NUM>.
+        tokenize: Se True, retorna uma lista de tokens em vez de uma string.
 
     Returns:
-        O texto limpo, normalizado e opcionalmente modificado.
+        O texto limpo como uma string ou uma lista de tokens.
     """
     if not isinstance(text, str):
-        return ""
+        return [] if tokenize else ""
     
     return _default_preprocessor.process(
         text,
         lowercase=lowercase,
         remove_stopwords=remove_stopwords,
         lemmatize=lemmatize,
-        normalize_numbers=normalize_numbers
+        normalize_numbers=normalize_numbers,
+        tokenize=tokenize
     )
