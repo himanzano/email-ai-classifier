@@ -3,6 +3,11 @@ from typing import Optional, Callable, List, Dict, Set, Union, overload, Literal
 
 # --- Stopwords (Extensível para múltiplos idiomas) ---
 
+# Stopwords são palavras comuns (artigos, preposições) que geralmente são removidas
+# do texto para reduzir o ruído e focar nos termos mais significativos.
+# A lista abaixo contém palavras comuns do português e foi montada com base em
+# corpora de referência, podendo ser estendida conforme o domínio.
+
 _STOPWORDS_PT: Set[str] = {
     'de', 'a', 'o', 'que', 'e', 'do', 'da', 'em', 'um', 'para', 'é', 'com', 'não',
     'uma', 'os', 'no', 'se', 'na', 'por', 'mais', 'as', 'dos', 'como', 'mas', 'foi',
@@ -37,6 +42,11 @@ _STOPWORD_LISTS: Dict[str, Set[str]] = {
 }
 
 # --- Lematização Heurística Simplificada ---
+
+# A lematização foi preferida ao stemming por ser uma abordagem menos destrutiva.
+# Ela reduz as palavras à sua forma base (lema), preservando o significado e
+# a legibilidade, o que facilita o debugging e a interpretabilidade dos resultados,
+# em contraste com o stemming, que apenas trunca as palavras.
 # NOTA: Esta é uma implementação básica e heurística de lematização,
 # focada em sufixos comuns do português. Não substitui uma biblioteca
 # completa de NLP (como NLTK ou spaCy), mas evita dependências externas.
@@ -92,6 +102,11 @@ def _lemmatize_text(text: str, lang: str = 'pt') -> str:
 
 # --- Normalização de Entidades ---
 
+# Para uma empresa do setor financeiro, normalizar números é crucial.
+# Tratar valores como `1.000,50`, `1000.50` e `R$ 1.000,50` como um token único `<NUM>`
+# ajuda o modelo a generalizar e focar no contexto, em vez de memorizar valores específicos,
+# melhorando a precisão da classificação.
+
 def _normalize_numbers(text: str) -> str:
     """
     Substitui vários formatos de números por um token semântico <NUM>.
@@ -105,6 +120,11 @@ def _normalize_numbers(text: str) -> str:
 
 
 # --- Tokenização ---
+
+# A tokenização divide o texto em unidades semânticas (tokens), como palavras ou
+# símbolos. Esta etapa é fundamental para modelos de NLP, pois transforma o texto
+# contínuo em uma sequência discreta de itens que podem ser analisados,
+# vetorizados e processados individualmente.
 
 def tokenize_text(text: str) -> List[str]:
     """
