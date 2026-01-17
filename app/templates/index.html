@@ -79,6 +79,14 @@ Classificador de Emails com IA
         resultsSection.classList.remove('hidden');
       }
     });
+
+    document.body.addEventListener('htmx:beforeSwap', function(evt) {
+      // Allow 400 and 500 errors to swap content (display error message)
+      if (evt.detail.xhr.status === 400 || evt.detail.xhr.status === 500) {
+        evt.detail.shouldSwap = true;
+        evt.detail.isError = false; // Prevent htmx:responseError from firing (suppress generic toast)
+      }
+    });
   </script>
 
 {% endblock %}
