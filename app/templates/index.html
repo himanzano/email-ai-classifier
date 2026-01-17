@@ -41,7 +41,7 @@ Classificador de Emails com IA
         hx-post="/api/process-email"
         hx-target="#results-section"
         hx-swap="innerHTML"
-        hx-on::after-request="document.getElementById('results-section').classList.remove('hidden')"
+        hx-on::before-request="document.getElementById('results-section').classList.remove('hidden')"
         enctype="multipart/form-data"
         class="space-y-6"
       >
