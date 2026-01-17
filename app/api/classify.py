@@ -86,19 +86,23 @@ async def process_email_endpoint(
 
         processed_text = preprocess_text(raw_content, remove_stopwords=True, lemmatize=True)
         classification_result = classify_email(processed_text)
-        category = classification_result["category"]
-        suggested_response = generate_response(raw_content, category)
+        
+        category_raw = classification_result["category"]
+        suggested_response = generate_response(raw_content, category_raw)
+        category_display = category_raw.lower()
 
         return HTMXResponse(
             request, "partials/result_display.html",
             context={
-                "category": category,
-                "confidence": classification_result["confidence"],
-                "reason": classification_result["reason"],
-                "response": suggested_response,
+                "result": {
+                    "category": category_display,
+                    "confidence": classification_result["confidence"],
+                    "reason": classification_result["reason"],
+                    "suggested_response": suggested_response,
+                }
             },
             toast_type="success", toast_title="E-mail Analisado",
-            toast_description=f"Classificado como '{category}'.",
+            toast_description=f"Classificado como '{category_display}'.",
         )
 
     except (InvalidClassificationResponseError, InvalidResponseJsonError, InvalidGeneratedResponseError) as e:
