@@ -1,17 +1,26 @@
+import sys
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
-# Importa o router do módulo da API
+# --- Configuração do Python Path ---
+# Adiciona a raiz do projeto ao sys.path para garantir que as importações
+# absolutas (ex: `from app.services...`) funcionem, mesmo quando o script
+# é executado de dentro de um subdiretório (como `app/main.py`).
+project_root = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(project_root))
+
+
+# Importa o router do módulo da API (agora funciona, pois 'app' está no path)
 from app.api import classify as classify_api
 
 # --- Configuração Inicial ---
 
 # Carrega variáveis de ambiente de um arquivo .env na raiz do projeto.
 # Essencial para configurar chaves de API e outras configurações sem hardcoding.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = project_root
 ENV_PATH = BASE_DIR / ".env"
 load_dotenv(dotenv_path=ENV_PATH)
 
@@ -42,7 +51,5 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 async def root():
     """
     Endpoint raiz que serve o arquivo `index.html` do frontend.
-    `include_in_schema=False` evita que esta rota de UI apareça na documentação
-    automática da API (ex: /docs).
     """
     return FileResponse(static_dir / "index.html")
