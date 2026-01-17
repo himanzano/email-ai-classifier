@@ -26,38 +26,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateFlowIndicator = (currentStep) => {
         steps.forEach(step => {
             const stepNumber = parseInt(step.dataset.step, 10);
-            if (stepNumber <= currentStep) {
-                step.classList.add('active');
-            } else {
-                step.classList.remove('active');
-            }
+            step.classList.toggle('active', stepNumber <= currentStep);
         });
     };
 
     const showLoading = (isLoading) => {
+        form.style.display = isLoading ? 'none' : 'block';
+        resultSection.classList.toggle('hidden', !isLoading);
+        loadingState.style.display = isLoading ? 'flex' : 'none';
+        
         if (isLoading) {
-            resultSection.classList.remove('hidden');
-            loadingState.classList.remove('hidden');
             successState.classList.add('hidden');
             errorState.classList.add('hidden');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Analisando...';
             updateFlowIndicator(2);
-        } else {
-            loadingState.classList.add('hidden');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Analisar e Gerar Resposta';
         }
     };
 
     const showSuccess = (data) => {
+        loadingState.style.display = 'none';
         successState.classList.remove('hidden');
         
         categoryBadge.textContent = data.category;
+        categoryBadge.className = 'badge text-white'; // Reseta classes de cor
         if (data.category === 'Produtivo') {
-            categoryBadge.className = 'badge bg-status-productive text-white';
+            categoryBadge.classList.add('bg-status-productive');
         } else {
-            categoryBadge.className = 'badge bg-status-improductive text-white';
+            categoryBadge.classList.add('bg-status-improductive');
         }
 
         responseTextEl.textContent = data.response;
@@ -65,65 +59,76 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const showError = (message) => {
+        loadingState.style.display = 'none';
+        resultSection.classList.remove('hidden');
+        successState.classList.add('hidden');
         errorState.classList.remove('hidden');
         errorMessageEl.textContent = message || 'Não foi possível processar sua solicitação. Tente novamente.';
-        updateFlowIndicator(1); // Volta para a primeira etapa
+        updateFlowIndicator(1);
     };
     
     const resetUI = () => {
         form.reset();
+        emailContentEl.value = '';
+        fileUploadEl.value = ''; // Limpa a seleção do arquivo
         fileNameEl.textContent = '';
         resultSection.classList.add('hidden');
-        loadingState.classList.add('hidden');
+        loadingState.style.display = 'none';
         successState.classList.add('hidden');
         errorState.classList.add('hidden');
+        form.style.display = 'block';
         updateFlowIndicator(1);
     };
 
     // --- Lógica de Eventos ---
 
-    // Envio do formulário
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const file = fileUploadEl.files[0];
         const emailText = emailContentEl.value.trim();
 
-        if (!emailText) {
-            showError("O campo de conteúdo do e-mail não pode estar vazio.");
-            resultSection.classList.remove('hidden'); // Mostra a seção de erro
+        if (!emailText && !file) {
+            showError("Por favor, cole o conteúdo do e-mail ou anexe um arquivo.");
             return;
         }
 
         showLoading(true);
-
+        
         try {
-            // Simulação de chamada de API. Substitua pelo seu endpoint real.
-            // Ex: const response = await fetch('/api/classify', { ... });
-            const response = await fetch('/api/process-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email_content: emailText }),
-            });
+            let response;
+            if (file) {
+                const formData = new FormData();
+                formData.append('file', file);
+                response = await fetch('/api/process-email', { 
+                    method: 'POST', 
+                    body: formData 
+                });
+            } else {
+                response = await fetch('/api/process-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email_content: emailText }),
+                });
+            }
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(errorData?.detail || `Erro HTTP: ${response.status}`);
+                const errorData = await response.json().catch(() => ({ detail: `Erro no servidor: ${response.status}` }));
+                throw new Error(errorData.detail);
             }
 
             const data = await response.json();
             showSuccess(data);
 
         } catch (error) {
-            showError(error.message);
-        } finally {
-            showLoading(false);
+            showError(`Falha na comunicação com a API: ${error.message}`);
         }
     });
 
-    // Upload de arquivo
     fileUploadEl.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
-            fileNameEl.textContent = `Arquivo selecionado: ${file.name}`;
+            fileNameEl.textContent = `Arquivo: ${file.name}`;
             const reader = new FileReader();
             reader.onload = (event) => {
                 emailContentEl.value = event.target.result;
@@ -132,24 +137,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Botão de Copiar
     copyBtn.addEventListener('click', () => {
         navigator.clipboard.writeText(responseTextEl.textContent).then(() => {
             const originalBtnContent = copyBtn.innerHTML;
-            copyBtn.innerHTML = `
-                <ion-icon name="checkmark-outline"></ion-icon>
-                <span>Copiado!</span>
-            `;
-            setTimeout(() => {
-                copyBtn.innerHTML = originalBtnContent;
-            }, 2000);
+            copyBtn.innerHTML = `<ion-icon name="checkmark-outline" class="text-green-500"></ion-icon> <span>Copiado!</span>`;
+            setTimeout(() => { copyBtn.innerHTML = originalBtnContent; }, 2000);
         });
     });
     
-    // Botões para resetar a UI
     tryAgainBtn.addEventListener('click', resetUI);
     analyzeAnotherBtn.addEventListener('click', resetUI);
 
-    // Estado inicial
-    updateFlowIndicator(1);
+    resetUI();
 });
