@@ -1,89 +1,122 @@
+import json
 import os
 import tempfile
-from typing import Optional
-from fastapi import APIRouter, File, UploadFile, HTTPException, Form
-from pydantic import BaseModel
+from typing import Any, Dict, Optional
 
-# --- Importação dos Módulos de Lógica ---
-from app.utils.text_extractor import extract_text
+from fastapi import APIRouter, File, Form, Request, UploadFile
+from starlette.responses import HTMLResponse
+
+# --- Importações de Módulos ---
+from app.config import templates  # Importa da configuração central
+from app.services.classifier import (
+    InvalidClassificationResponseError,
+    InvalidResponseJsonError,
+    classify_email,
+)
+from app.services.responder import (
+    InvalidGeneratedResponseError,
+    generate_response,
+)
 from app.utils.preprocess import preprocess_text
-from app.services.classifier import classify_email, InvalidClassificationResponseError, InvalidResponseJsonError
-from app.services.responder import generate_response, InvalidGeneratedResponseError
+from app.utils.text_extractor import extract_text
+
+
+# --- Helper HTMXResponse (movido para cá) ---
+class HTMXResponse(HTMLResponse):
+    def __init__(
+        self, request: Request, template_name: str, context: Optional[Dict[str, Any]] = None, **kwargs
+    ):
+        toast_details = {
+            key.replace("toast_", ""): value
+            for key, value in kwargs.items()
+            if key.startswith("toast_")
+        }
+        kwargs = {key: value for key, value in kwargs.items() if not key.startswith("toast_")}
+
+        if context is None: context = {}
+        context.setdefault("request", request)
+        content = templates.get_template(template_name).render(context)
+
+        headers = kwargs.setdefault("headers", {})
+        if toast_details.get("type") and toast_details.get("title"):
+            headers["HX-Trigger"] = json.dumps({"toast": toast_details})
+
+        super().__init__(content=content, **kwargs)
+
 
 # --- Definição do Router ---
-router = APIRouter(
-    tags=["Email Processing"],
-)
+router = APIRouter(tags=["Email Processing"])
 
-# --- Modelos de Dados (Pydantic) ---
-
-class ClassificationResponse(BaseModel):
-    """Modelo de saída para a resposta da API."""
-    category: str
-    confidence: float
-    reason: str
-    response: str
 
 # --- Implementação do Endpoint ---
-
-@router.post("/api/process-email", response_model=ClassificationResponse)
+@router.post("/api/process-email")
 async def process_email_endpoint(
+    request: Request,
     email_content: Optional[str] = Form(None),
-    file: Optional[UploadFile] = File(None)
+    file: Optional[UploadFile] = File(None),
 ):
-    """
-    Recebe o conteúdo de um e-mail (via texto ou arquivo), processa-o através
-    do pipeline completo e retorna a classificação e uma resposta sugerida.
-    """
     if (email_content is None and file is None) or (email_content is not None and file is not None):
-        raise HTTPException(
+        return HTMXResponse(
+            request, "partials/error_display.html",
+            context={"error_message": "Forneça texto ou um arquivo, não ambos."},
             status_code=400,
-            detail="Forneça exatamente uma fonte de conteúdo: o campo de formulário 'email_content' ou um arquivo, não ambos ou nenhum."
+            toast_type="error", toast_title="Erro de Validação",
+            toast_description="É necessário enviar apenas uma fonte de conteúdo.",
         )
 
-    raw_content = ""
-    temp_file_path = None
-
+    raw_content, temp_file_path = "", None
     try:
-        if file is not None:
-            if not file.filename:
-                raise HTTPException(status_code=400, detail="O arquivo enviado não possui um nome de arquivo.")
-            
+        if file and file.filename:
             suffix = os.path.splitext(file.filename)[1]
             with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
                 temp_file.write(await file.read())
                 temp_file_path = temp_file.name
             raw_content = extract_text(temp_file_path)
-        
-        elif email_content is not None:
+        elif email_content:
             raw_content = extract_text(email_content)
 
         if not raw_content.strip():
-            raise HTTPException(status_code=400, detail="O conteúdo do e-mail está vazio ou não pôde ser lido.")
+            return HTMXResponse(
+                request, "partials/error_display.html",
+                context={"error_message": "O conteúdo do e-mail está vazio."},
+                status_code=400,
+                toast_type="error", toast_title="Erro de Conteúdo",
+                toast_description="O e-mail parece estar vazio ou não pôde ser lido.",
+            )
 
-        processed_text = preprocess_text(
-            raw_content,
-            remove_stopwords=True,
-            lemmatize=True,
-            normalize_numbers=True
-        )
-
+        processed_text = preprocess_text(raw_content, remove_stopwords=True, lemmatize=True)
         classification_result = classify_email(processed_text)
         category = classification_result["category"]
-
         suggested_response = generate_response(raw_content, category)
-        
-        return {
-            "category": category,
-            "confidence": classification_result["confidence"],
-            "reason": classification_result["reason"],
-            "response": suggested_response
-        }
+
+        return HTMXResponse(
+            request, "partials/result_display.html",
+            context={
+                "category": category,
+                "confidence": classification_result["confidence"],
+                "reason": classification_result["reason"],
+                "response": suggested_response,
+            },
+            toast_type="success", toast_title="E-mail Analisado",
+            toast_description=f"Classificado como '{category}'.",
+        )
 
     except (InvalidClassificationResponseError, InvalidResponseJsonError, InvalidGeneratedResponseError) as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao processar a resposta da IA: {e}")
+        return HTMXResponse(
+            request, "partials/error_display.html",
+            context={"error_message": f"Erro ao processar a resposta da IA: {e}"},
+            status_code=500,
+            toast_type="error", toast_title="Erro na IA",
+            toast_description="A resposta do modelo de IA foi inválida.",
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ocorreu um erro interno inesperado: {e}")
+        return HTMXResponse(
+            request, "partials/error_display.html",
+            context={"error_message": f"Ocorreu um erro inesperado: {e}"},
+            status_code=500,
+            toast_type="error", toast_title="Erro Inesperado",
+            toast_description="Não foi possível processar a solicitação.",
+        )
     finally:
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
