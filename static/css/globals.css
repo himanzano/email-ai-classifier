@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+/* ============================
+   Design System – Email AI
+   Tailwind v4
+   ============================ */
+
+@theme {
+  --color-background: hsl(210 20% 98%);
+  --color-foreground: hsl(222 47% 11%);
+
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222 47% 11%);
+
+  --color-primary: hsl(217 91% 50%);
+  --color-primary-foreground: hsl(0 0% 100%);
+
+  --color-secondary: hsl(210 20% 96%);
+  --color-secondary-foreground: hsl(222 47% 11%);
+
+  --color-muted: hsl(210 20% 96%);
+  --color-muted-foreground: hsl(215 16% 47%);
+
+  --color-accent: hsl(217 91% 95%);
+  --color-accent-foreground: hsl(217 91% 40%);
+
+  --color-destructive: hsl(0 84% 60%);
+  --color-success: hsl(142 76% 36%);
+
+  --color-productive: hsl(142 76% 36%);
+  --color-unproductive: hsl(0 84% 60%);
+
+  --color-border: hsl(214 32% 91%);
+  --color-input: hsl(214 32% 91%);
+  --color-ring: hsl(217 91% 50%);
+
+  --radius-xl: 0.625rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .badge-productive {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border;
+    color: theme(--color-productive);
+    background-color: color-mix(in hsl, theme(--color-productive) 15%, transparent);
+    border-color: color-mix(in hsl, theme(--color-productive) 20%, transparent);
+  }
+
+  .badge-unproductive {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border;
+    color: theme(--color-unproductive);
+    background-color: color-mix(in hsl, theme(--color-unproductive) 15%, transparent);
+    border-color: color-mix(in hsl, theme(--color-unproductive) 20%, transparent);
+  }
+
+  .result-container {
+    @apply rounded-xl border bg-card p-6 shadow-sm animate-fade-in;
+  }
+
+  .loading-pulse {
+    @apply animate-pulse;
+    background: linear-gradient(
+      90deg,
+      color-mix(in hsl, theme(--color-primary) 10%, transparent),
+      color-mix(in hsl, theme(--color-primary) 20%, transparent),
+      color-mix(in hsl, theme(--color-primary) 10%, transparent)
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+@layer components {
+  .toast {
+    @apply pointer-events-auto flex flex-col gap-1 rounded-lg border
+           bg-background text-foreground shadow-lg p-4 text-sm
+           animate-toast-in;
+  }
+
+  .toast-success {
+    border-color: color-mix(in hsl, theme(--color-success) 30%, transparent);
+  }
+
+  .toast-error {
+    border-color: color-mix(in hsl, theme(--color-destructive) 30%, transparent);
+  }
+
+  .toast-info {
+    border-color: color-mix(in hsl, theme(--color-primary) 30%, transparent);
+  }
+
+  .toast-warning {
+    border-color: color-mix(in hsl, theme(--color-unproductive) 30%, transparent);
+  }
+
+  .toast-title {
+    @apply font-medium;
+  }
+
+  .toast-description {
+    color: theme(--color-muted-foreground);
+  }
+
+  .toast-actions {
+    @apply flex gap-2 mt-2;
+  }
+
+  .toast-btn {
+    @apply rounded-md px-3 py-1 text-xs font-medium;
+  }
+
+  .toast-btn-primary {
+    background-color: theme(--color-primary);
+    color: theme(--color-primary-foreground);
+  }
+
+  .toast-btn-muted {
+    background-color: theme(--color-muted);
+    color: theme(--color-muted-foreground);
+  }
+}
+
+@layer components {
+  .card-elevated {
+    @apply bg-card rounded-xl border border-border shadow-md;
+  }
+}
+
+/* ============================
+   Animations
+   ============================ */
+
+@utility animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@utility animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
+@utility animate-toast-in {
+  animation: toast-in 0.2s ease-out;
+}
+
+@utility animate-toast-out {
+  animation: toast-out 0.15s ease-in forwards;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
