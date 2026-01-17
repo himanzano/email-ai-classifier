@@ -1,63 +1,16 @@
 import os
-import re
-from typing import Dict
+from typing import Set
 
-import vertexai
 from vertexai.generative_models import GenerativeModel, GenerationConfig
 
-# --- Configuração do Vertex AI (reutilizada do ambiente) ---
+# --- Configurações e Constantes ---
 
-MODEL_NAME = "gemini-2.5-flash"  # Modelo rápido e eficiente para geração de texto curto
+MODEL_NAME = "gemini-2.5-flash"
+VALID_CATEGORIES: Set[str] = {"Produtivo", "Improdutivo"}
 
-# --- Estrutura de Prompts para Geração de Resposta ---
+PROMPT_DIR = os.path.join(os.path.dirname(__file__), "..", "prompts")
+EMAIL_RESPONDER_PROMPT_PATH = os.path.join(PROMPT_DIR, "email_responder.prompt")
 
-# O prompt base define o papel da IA, o tom, as restrições de segurança e os placeholders
-# para o conteúdo específico da categoria e do e-mail.
-BASE_PROMPT = """
-Você é um assistente de e-mail corporativo para uma empresa do setor financeiro.
-Sua única tarefa é redigir uma resposta curta e profissional para um e-mail que já foi analisado.
-
-REGRAS DE TOM E ESTILO (OBRIGATÓRIO):
-- Seja sempre educado, profissional e objetivo.
-- Use uma linguagem clara e direta.
-- NÃO use informalidade (gírias, abreviações).
-- NÃO use jargões técnicos.
-- NÃO use emojis.
-- NUNCA prometa ações ou prazos que não estejam explicitamente instruídos.
-
-RESTRIÇÕES DE SEGURANÇA (OBRIGATÓRIAS):
-- NÃO invente informações.
-- NÃO inclua detalhes do e-mail original na resposta.
-- Sua resposta deve ser autossuficiente e genérica.
-
-INSTRUÇÕES PARA ESTA TAREFA ESPECÍFICA:
-<<<CATEGORY_INSTRUCTIONS>>>
-
-E-MAIL ORIGINAL (apenas para contexto, não para ser citado):
----
-<<<EMAIL_TEXT>>>
----
-
-Gere apenas o texto da resposta, sem introduções ou despedidas adicionais.
-"""
-
-# Prompts específicos por categoria, que serão injetados no prompt base.
-CATEGORY_PROMPTS = {
-    "Produtivo": """
-    INSTRUÇÃO: O e-mail foi classificado como "Produtivo".
-    OBJETIVO: Redija uma resposta que confirme o recebimento e indique que a solicitação foi registrada e será processada pela equipe responsável.
-
-    EXEMPLO DE RESPOSTA IDEAL:
-    "Agradecemos o seu contato. Sua solicitação foi recebida e encaminhada para a equipe responsável. Entraremos em contato se informações adicionais forem necessárias."
-    """,
-    "Improdutivo": """
-    INSTRUÇÃO: O e-mail foi classificado como "Improdutivo".
-    OBJETIVO: Redija uma resposta curta e cordial informando que a mensagem foi recebida e que nenhuma ação adicional é necessária.
-
-    EXEMPLO DE RESPOSTA IDEAL:
-    "Agradecemos o seu contato. Esta é uma mensagem informativa e nenhuma ação adicional é necessária de nossa parte."
-    """
-}
 
 # --- Erros Personalizados ---
 
@@ -66,77 +19,120 @@ class InvalidGeneratedResponseError(ValueError):
     pass
 
 
-# --- Funções Auxiliares de Validação ---
+# --- Funções Auxiliares ---
+
+def _load_prompt(prompt_path: str) -> str:
+    """Carrega o conteúdo do arquivo de prompt especificado."""
+    try:
+        with open(prompt_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Arquivo de prompt não encontrado: {prompt_path}")
+
 
 def _validate_generated_response(response_text: str, original_text: str) -> None:
     """
-    Executa validações de segurança e qualidade na resposta gerada pela IA.
+    Valida a qualidade e segurança da resposta gerada.
 
     Args:
-        response_text: O texto da resposta gerada.
-        original_text: O texto do e-mail original para verificação de repetição.
+        response_text: O texto gerado pelo modelo.
+        original_text: O texto do e-mail original (para verificação de eco).
 
     Raises:
-        InvalidGeneratedResponseError: Se qualquer validação falhar.
+        InvalidGeneratedResponseError: Se a resposta for considerada inválida.
     """
     # 1. Validação de conteúdo vazio ou muito curto
-    if not response_text or len(response_text.strip()) < 20:
+    if not response_text or len(response_text.strip()) < 10:
         raise InvalidGeneratedResponseError("A resposta gerada está vazia ou é muito curta.")
 
-    # 2. Validação de comprimento máximo (evita respostas excessivamente longas)
-    if len(response_text) > 1000:
-        raise InvalidGeneratedResponseError("A resposta gerada excede o limite de 1000 caracteres.")
+    # 2. Validação de comprimento excessivo
+    if len(response_text) > 2000:
+        raise InvalidGeneratedResponseError("A resposta gerada excede o limite de segurança.")
 
-    # 3. Validação de frases proibidas (indicam que a IA "quebrou o personagem")
-    forbidden_phrases = ["como modelo de linguagem", "não consigo", "não posso"]
-    if any(phrase in response_text.lower() for phrase in forbidden_phrases):
-        raise InvalidGeneratedResponseError(f"A resposta gerada contém uma frase proibida: '{response_text}'")
+    # 3. Validação de alucinações de personagem (frases de modelo de linguagem)
+    forbidden_phrases = ["como modelo de linguagem", "sou uma ia", "não consigo", "não posso"]
+    normalized_response = response_text.lower()
+    if any(phrase in normalized_response for phrase in forbidden_phrases):
+        raise InvalidGeneratedResponseError(f"A resposta contém frases proibidas de IA: '{response_text}'")
 
-    # 4. Validação de repetição (simples)
-    # Verifica se a IA não está apenas repetindo uma grande parte do e-mail original.
-    if original_text[:100].lower() in response_text.lower() and len(original_text) > 100:
-        raise InvalidGeneratedResponseError("A resposta gerada parece repetir o conteúdo do e-mail original.")
+    # 4. Validação de eco (repetição do e-mail original)
+    # Se mais de 30% do e-mail original estiver contido na resposta, provavelmente é um eco
+    if len(original_text) > 50 and original_text[:50].lower() in normalized_response:
+         raise InvalidGeneratedResponseError("A resposta parece repetir o início do e-mail original.")
 
 
-# --- Serviço de Geração de Resposta ---
+def _clean_response(text: str) -> str:
+    """Normaliza a resposta removendo formatação indesejada."""
+    text = text.strip()
+    
+    # Remove blocos de código markdown se o modelo insistir em colocá-los
+    if text.startswith("```"):
+        text = text.split("\n", 1)[-1]
+    if text.endswith("```"):
+        text = text.rsplit("\n", 1)[0]
+        
+    # Remove prefixos comuns de chat (ex: "Assunto:", "Resposta:")
+    text = text.replace("Assunto:", "").replace("Resposta:", "").strip()
+    
+    return text
+
+
+# --- Serviço Principal ---
 
 def generate_response(email_text: str, category: str) -> str:
     """
-    Gera uma resposta automática para um e-mail com base em sua categoria.
+    Gera uma resposta de e-mail usando o modelo Gemini com base na categoria.
 
     Args:
-        email_text: O conteúdo de texto do e-mail original.
-        category: A categoria pré-classificada ("Produtivo" ou "Improdutivo").
+        email_text: O corpo do e-mail original.
+        category: A classificação do e-mail ('Produtivo' ou 'Improdutivo').
 
     Returns:
-        Uma string contendo a resposta gerada e validada.
+        O corpo do e-mail de resposta gerado.
 
     Raises:
-        ValueError: Se a categoria for desconhecida.
-        InvalidGeneratedResponseError: Se a resposta gerada falhar nas validações.
-        Exception: Para erros gerais da API Vertex AI.
+        ValueError: Se os parâmetros de entrada forem inválidos.
+        FileNotFoundError: Se o arquivo de prompt não for encontrado.
+        InvalidGeneratedResponseError: Se a resposta gerada não for segura/válida.
     """
-    if category not in CATEGORY_PROMPTS:
-        raise ValueError(f"Categoria de resposta desconhecida: '{category}'")
+    # Validação de Entrada
+    if not email_text or not email_text.strip():
+        raise ValueError("O texto do e-mail não pode ser vazio.")
+    
+    # Normalização e validação da categoria
+    # A comparação é case-insensitive para robustez, mas passamos a versão correta pro prompt
+    normalized_category = category.strip().capitalize()
+    if normalized_category not in VALID_CATEGORIES:
+        # Tenta mapear ou falha. Aqui optamos por ser estritos para evitar erros silenciosos.
+        # Se a categoria for desconhecida, o prompt pode se comportar de forma imprevisível.
+        raise ValueError(f"Categoria inválida: '{category}'. Esperado: {VALID_CATEGORIES}")
 
-    # 1. Selecionar e montar o prompt final
-    category_instructions = CATEGORY_PROMPTS[category]
-    prompt = BASE_PROMPT.replace("<<<CATEGORY_INSTRUCTIONS>>>", category_instructions)
+    # Carregamento e Preparação do Prompt
+    prompt_template = _load_prompt(EMAIL_RESPONDER_PROMPT_PATH)
+    
+    # Interpolação Segura
+    prompt = prompt_template.replace("<<<EMAIL_CATEGORY>>>", normalized_category)
     prompt = prompt.replace("<<<EMAIL_TEXT>>>", email_text)
 
-    # 2. Chamar a API do Gemini via Vertex AI
+    # Configuração do Modelo
     model = GenerativeModel(MODEL_NAME)
     generation_config = GenerationConfig(
-        temperature=0.1,  # Baixa temperatura para manter a consistência e o tom
-        max_output_tokens=256
+        temperature=0.2,  # Baixa criatividade para garantir profissionalismo e seguir regras
+        max_output_tokens=2500,
+        top_p=0.8,
+        top_k=40
     )
 
-    response = model.generate_content(prompt, generation_config=generation_config)
-    
-    # 3. Extrair a resposta de texto
-    generated_text = response.text.strip()
+    # Chamada ao Modelo
+    try:
+        response = model.generate_content(prompt, generation_config=generation_config)
+        generated_text = response.text
+    except Exception as e:
+        # Encapsula erros da API para facilitar o tratamento no nível superior
+        raise RuntimeError(f"Erro ao comunicar com o modelo Gemini: {e}") from e
 
-    # 4. Validar a resposta gerada
-    _validate_generated_response(generated_text, email_text)
+    # Pós-processamento e Validação
+    cleaned_text = _clean_response(generated_text)
+    _validate_generated_response(cleaned_text, email_text)
 
-    return generated_text
+    return cleaned_text
