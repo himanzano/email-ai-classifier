@@ -1,4 +1,15 @@
-<div id="classification-result" class="space-y-4 animate-fade-in">
+<div id="classification-result" class="space-y-6 animate-fade-in">
+  <!-- New Classification Button -->
+  <div class="flex items-center justify-between">
+    <h3 class="text-lg font-semibold text-foreground">Resultado da Análise</h3>
+    <button 
+    type="button"
+    onclick="resetClassification()"
+    class="text-sm text-primary hover:text-primary/80 font-medium transition-colors">
+      Nova Classificação
+    </button>
+  </div>
+  
   <!-- Category Badge -->
   <div class="flex items-center gap-3">
     <span class="text-sm font-medium text-muted-foreground">
@@ -102,5 +113,22 @@
         location.reload();
       }, 2000);
     });
+  }
+
+  function resetClassification() {
+    // Hide results
+    document.getElementById('results-section').classList.add('hidden');
+    document.getElementById('results-section').innerHTML = ''; // Clear content to prevent flash on next show
+    
+    // Clear inputs
+    const textarea = document.getElementById('email-content');
+    if (textarea) textarea.value = '';
+    
+    const fileInput = document.getElementById('file');
+    if (fileInput) fileInput.value = '';
+    
+    // Scroll to input
+    const inputSection = document.getElementById('input-section');
+    if (inputSection) inputSection.scrollIntoView({ behavior: 'smooth' });
   }
 </script>
