@@ -41,7 +41,6 @@ Classificador de Emails com IA
         hx-post="/api/process-email"
         hx-target="#results-section"
         hx-swap="innerHTML"
-        hx-on::before-request="document.getElementById('results-section').classList.remove('hidden')"
         enctype="multipart/form-data"
         class="space-y-6"
       >
@@ -61,8 +60,25 @@ Classificador de Emails com IA
       {# Conteúdo dinâmico aqui #}
     </section>
 
+    <!-- Template de Loading (para ser injetado via JS) -->
+    <template id="loading-template">
+      {% include "partials/loading_state.html" %}
+    </template>
+
     {% include "partials/footer_info.html" %}
 
   </section>
+
+  <script>
+    document.body.addEventListener('htmx:beforeRequest', function(evt) {
+      if (evt.target.id === 'email-form') {
+        const resultsSection = document.getElementById('results-section');
+        const loadingTemplate = document.getElementById('loading-template');
+        
+        resultsSection.innerHTML = loadingTemplate.innerHTML;
+        resultsSection.classList.remove('hidden');
+      }
+    });
+  </script>
 
 {% endblock %}
