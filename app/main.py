@@ -10,6 +10,8 @@ sys.path.insert(0, str(project_root))
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
+from fastapi.exceptions import HTTPException
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from dotenv import load_dotenv
 
 # --- Importações de Módulos ---
@@ -28,6 +30,15 @@ app = FastAPI(
     description="Uma aplicação completa para classificar e-mails e gerar respostas usando IA.",
     version="1.0.0"
 )
+
+# --- Handlers de Exceção ---
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        return templates.TemplateResponse(
+            "404.html", {"request": request}, status_code=404
+        )
+    return await request.app.default_exception_handler(request, exc)
 
 # --- Montar Rotas e Arquivos Estáticos ---
 app.include_router(classify_api.router)
