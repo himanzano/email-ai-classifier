@@ -1,0 +1,75 @@
+{# 
+  Base template da aplicação.
+
+  Utilizamos Jinja2 para renderização server-side,
+  mantendo o fluxo request/response do FastAPI.
+  A interatividade é feita com htmx, evitando a
+  complexidade de SPAs para este escopo.
+#}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>{% block title %}Classificador de Emails com IA{% endblock %}</title>
+
+  <!-- CSS compilado (Tailwind + Design System) -->
+  <link
+    rel="stylesheet"
+    href="/static/css/tailwind.css"
+  />
+
+  <!-- htmx -->
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
+
+  {% block head %}{% endblock %}
+</head>
+
+<body class="min-h-screen bg-background text-foreground">
+
+  <!-- Header global -->
+  {% block header %}{% endblock %}
+
+  <!-- Conteúdo principal -->
+  <main class="container mx-auto px-4 py-10">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Modais, toasts, overlays -->
+  {% block overlays %}{% endblock %}
+
+  {% include "partials/toaster.html" %}
+
+  <script src="/static/js/toast.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('email-form');
+      if (!form) return;
+
+      const submitBtn = document.getElementById('process-email-btn');
+      if (!submitBtn) return;
+
+      const checkButtonState = () => {
+        const emailTextarea = form.querySelector('#email-content');
+        const fileInput = form.querySelector('#file');
+
+        const isTextFilled = emailTextarea && emailTextarea.value.trim() !== '';
+        const isFileSelected = fileInput && fileInput.files.length > 0;
+
+        submitBtn.disabled = !isTextFilled && !isFileSelected;
+      };
+
+      // Adiciona listeners ao formulário para delegar eventos, mesmo quando o conteúdo muda via HTMX
+      form.addEventListener('input', checkButtonState); // Dispara para o textarea
+      form.addEventListener('change', checkButtonState); // Dispara para o input de arquivo
+      
+      // Verifica o estado inicial (caso a página seja recarregada com dados)
+      checkButtonState();
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}
+Classificador de Emails com IA
+{% endblock %}
+
+{% block header %}
+  {% include "partials/header.html" %}
+{% endblock %}
+
+{% block content %}
+
+  <section
+    id="email-classifier"
+    class="mx-auto max-w-2xl"
+  >
+
+    <!-- Input Section -->
+    <section
+      id="input-section"
+      class="card-elevated p-6 space-y-6"
+      aria-labelledby="input-heading"
+    >
+      <header>
+        <h2
+          id="input-heading"
+          class="text-lg font-semibold text-foreground"
+        >
+          Enviar Email para Classificação
+        </h2>
+        <p class="text-sm text-muted-foreground mt-1">
+          Escolha uma forma de enviar o conteúdo do email
+        </p>
+      </header>
+
+
+
+      <!-- Formulário -->
+      <form
+        id="email-form"
+        hx-post="/api/process-email"
+        hx-target="#results-section"
+        hx-swap="innerHTML"
+        hx-indicator="#loading-indicator"
+        enctype="multipart/form-data"
+        class="space-y-6"
+      >
+        {# O wrapper abaixo é trocado pelo HTMX e contém tanto os botões de toggle quanto a área de input #}
+        {% include "partials/input_wrapper.html" %}
+
+        {% include "partials/process_button.html" %}
+      </form>
+    </section>
+
+    <!-- Results Section (htmx target) -->
+    <section
+      id="results-section"
+      class="space-y-4"
+      aria-live="polite"
+    >
+      {# Conteúdo dinâmico aqui #}
+    </section>
+
+    {% include "partials/footer_info.html" %}
+
+  </section>
+
+{% endblock %}

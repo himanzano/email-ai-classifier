@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}
+404 · Página não encontrada
+{% endblock %}
+
+{% block content %}
+
+<section
+  class="flex min-h-[70vh] items-center justify-center"
+  role="alert"
+  aria-labelledby="not-found-title"
+>
+  <div class="text-center space-y-4">
+    <h1
+      id="not-found-title"
+      class="text-4xl font-bold text-foreground"
+    >
+      404
+    </h1>
+
+    <p class="text-xl text-muted-foreground">
+      Oops! Página não encontrada
+    </p>
+
+    <a
+      href="/"
+      class="inline-block text-primary underline font-medium hover:text-primary/90 transition-colors"
+    >
+      Voltar para a página inicial
+    </a>
+  </div>
+</section>
+
+{% endblock %}

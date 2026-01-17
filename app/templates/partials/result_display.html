@@ -1,0 +1,106 @@
+<div id="classification-result" class="space-y-4 animate-fade-in">
+  <!-- Category Badge -->
+  <div class="flex items-center gap-3">
+    <span class="text-sm font-medium text-muted-foreground">
+      Classificação:
+    </span>
+
+    {% if result.category == "produtivo" %}
+      <span
+        class="badge-productive"
+        role="status"
+        aria-label="Email classificado como produtivo"
+      >
+        <!-- CheckCircle -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M9 12l2 2 4-4" />
+          <circle cx="12" cy="12" r="10" />
+        </svg>
+        <span class="capitalize">produtivo</span>
+      </span>
+    {% else %}
+      <span
+        class="badge-unproductive"
+        role="status"
+        aria-label="Email classificado como improdutivo"
+      >
+        <!-- XCircle -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M15 9l-6 6M9 9l6 6" />
+          <circle cx="12" cy="12" r="10" />
+        </svg>
+        <span class="capitalize">improdutivo</span>
+      </span>
+    {% endif %}
+  </div>
+
+  <!-- Suggested Response -->
+  <div class="space-y-3">
+    <div class="flex items-center gap-2 text-sm font-medium text-foreground">
+      <!-- MessageSquare -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary"
+           fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+      </svg>
+      <span>Resposta Sugerida</span>
+    </div>
+
+    <div
+      id="suggested-response"
+      class="relative p-4 rounded-lg border border-border bg-secondary/30"
+    >
+      <pre
+        id="response-text"
+        class="text-sm text-foreground leading-relaxed whitespace-pre-wrap pr-10"
+      >{{ result.suggested_response }}</pre>
+
+      <!-- Copy button -->
+      <button
+        type="button"
+        onclick="copySuggestedResponse(this)"
+        class="absolute top-3 right-3 p-2 rounded-md
+               text-muted-foreground hover:text-foreground hover:bg-secondary
+               transition-all duration-200"
+        aria-label="Copiar resposta"
+      >
+        <!-- Copy icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+             fill="none" viewBox="0 0 24 24"
+             stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Usei JavaScript apenas para uma ação pontual (clipboard), que não faz sentido roundtripar para o servidor. 
+  function copySuggestedResponse(button) {
+    const text = document.getElementById("response-text").innerText;
+
+    navigator.clipboard.writeText(text).then(() => {
+      button.classList.remove("text-muted-foreground");
+      button.classList.add("text-success");
+
+      button.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+             fill="none" viewBox="0 0 24 24"
+             stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M5 13l4 4L19 7" />
+        </svg>
+      `;
+
+      setTimeout(() => {
+        location.reload();
+      }, 2000);
+    });
+  }
+</script>

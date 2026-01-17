@@ -1,0 +1,30 @@
+<div
+  id="error-display"
+  class="flex flex-col items-center gap-4 p-6 rounded-lg border border-destructive/20 bg-destructive/5 animate-fade-in"
+  role="alert"
+>
+  <div class="flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10">
+    <i data-lucide="alert-triangle" class="w-6 h-6 text-destructive"></i>
+  </div>
+
+  <div class="text-center">
+    <p class="text-sm font-medium text-foreground">
+      Erro no Processamento
+    </p>
+    <p class="text-sm text-muted-foreground mt-1">
+      {{ error_message }}
+    </p>
+  </div>
+
+  {% if show_retry %}
+    <button
+      hx-post="{{ retry_url }}"
+      hx-target="#main-content"
+      hx-swap="innerHTML"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+    >
+      <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+      <span>Tentar Novamente</span>
+    </button>
+  {% endif %}
+</div>

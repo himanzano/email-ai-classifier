@@ -1,0 +1,71 @@
+<div class="space-y-3">
+  <label class="text-sm font-medium text-foreground">
+    Upload de Arquivo
+  </label>
+
+  <!-- Upload area -->
+  <div
+    class="
+      relative flex flex-col items-center justify-center gap-3 p-8 rounded-lg
+      border-2 border-dashed border-border bg-secondary/30
+      hover:border-primary/40 hover:bg-secondary/50
+      transition-all duration-200 mt-2
+    "
+  >
+    <input
+      type="file"
+      id="file"
+      name="file"
+      accept=".txt,.pdf"
+      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+      aria-describedby="file-upload-hint"
+    />
+
+    <!-- Upload icon -->
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="w-6 h-6 text-primary"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+      aria-hidden="true"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="M7 10l5-5 5 5" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 15V3" />
+    </svg>
+
+    <div class="text-center">
+      <p class="text-sm font-medium text-foreground">
+        Arraste um arquivo ou
+        <span class="text-primary">clique para selecionar</span>
+      </p>
+      <p
+        id="file-upload-hint"
+        class="text-xs text-muted-foreground mt-1"
+      >
+        Formatos aceitos: .txt, .pdf (máx. 5MB)
+      </p>
+    </div>
+  </div>
+
+  <!-- Error message (renderizado pelo backend, se houver) -->
+  {% if error %}
+    <div class="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-4 h-4 flex-shrink-0"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ error }}</span>
+    </div>
+  {% endif %}
+</div>

@@ -1,0 +1,96 @@
+<div
+  class="flex gap-2 p-1 bg-secondary rounded-lg"
+  role="tablist"
+  aria-label="Método de entrada"
+>
+  <!-- Texto -->
+  <button
+    role="tab"
+    aria-selected="{{ 'true' if active_method == 'text' else 'false' }}"
+    hx-get="/partials/input-method/text"
+    hx-target="#input-wrapper"
+    hx-swap="outerHTML"
+    hx-push-url="false"
+    class="
+      flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium
+      transition-all duration-200
+      {% if active_method == 'text' %}
+        bg-card text-foreground shadow-sm
+      {% else %}
+        text-muted-foreground hover:text-foreground hover:bg-card/50
+      {% endif %}
+    "
+  >
+    <!-- FileText icon -->
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="w-4 h-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+      aria-hidden="true"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+      />
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M14 2v6h6"
+      />
+    </svg>
+
+    <span>Colar Texto</span>
+  </button>
+
+  <!-- Arquivo -->
+  <button
+    role="tab"
+    aria-selected="{{ 'true' if active_method == 'file' else 'false' }}"
+    hx-get="/partials/input-method/file"
+    hx-target="#input-wrapper"
+    hx-swap="outerHTML"
+    hx-push-url="false"
+    class="
+      flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium
+      transition-all duration-200
+      {% if active_method == 'file' %}
+        bg-card text-foreground shadow-sm
+      {% else %}
+        text-muted-foreground hover:text-foreground hover:bg-card/50
+      {% endif %}
+    "
+  >
+    <!-- Upload icon -->
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="w-4 h-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+      aria-hidden="true"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+      />
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M7 10l5-5 5 5"
+      />
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M12 15V3"
+      />
+    </svg>
+
+    <span>Upload de Arquivo</span>
+  </button>
+</div>

@@ -1,0 +1,16 @@
+{# Este wrapper é trocado pelo HTMX para atualizar tanto os botões de toggle quanto a área de input #}
+<div id="input-wrapper" class="space-y-4">
+  
+  {# Renderiza os botões de toggle, passando o método ativo #}
+  {% include "partials/input_method_toggle.html" %}
+
+  {# Renderiza a área de input correta com base no método ativo #}
+  <div id="input-container">
+    {% if active_method == 'text' %}
+      {% include "partials/text_input.html" %}
+    {% else %}
+      {% include "partials/file_upload.html" %}
+    {% endif %}
+  </div>
+
+</div>
