@@ -108,7 +108,10 @@ async def process_email_endpoint(
     except (InvalidClassificationResponseError, InvalidResponseJsonError, InvalidGeneratedResponseError) as e:
         return HTMXResponse(
             request, "partials/error_display.html",
-            context={"error_message": f"Erro ao processar a resposta da IA: {e}"},
+            context={
+                "error_message": f"Erro ao processar a resposta da IA: {e}",
+                "show_retry": True
+            },
             status_code=500,
             toast_type="error", toast_title="Erro na IA",
             toast_description="A resposta do modelo de IA foi inválida.",
@@ -116,7 +119,10 @@ async def process_email_endpoint(
     except Exception as e:
         return HTMXResponse(
             request, "partials/error_display.html",
-            context={"error_message": f"Ocorreu um erro inesperado: {e}"},
+            context={
+                "error_message": f"Ocorreu um erro inesperado: {e}",
+                "show_retry": True
+            },
             status_code=500,
             toast_type="error", toast_title="Erro Inesperado",
             toast_description="Não foi possível processar a solicitação.",
