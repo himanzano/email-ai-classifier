@@ -1,0 +1,30 @@
+{
+  "name": "email-ai-classifier",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "tailwind": "npx @tailwindcss/cli -i ./static/css/globals.css -o ./static/css/tailwind.css",
+    "tailwind:watch": "npx @tailwindcss/cli -i ./static/css/globals.css -o ./static/css/tailwind.css --watch"
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/himanzano/email-ai-classifier.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/himanzano/email-ai-classifier/issues"
+  },
+  "homepage": "https://github.com/himanzano/email-ai-classifier#readme",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "tailwindcss": "^4.1.18"
+  }
+}
