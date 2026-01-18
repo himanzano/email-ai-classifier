@@ -8,12 +8,13 @@ dependencies = [
     "fastapi[standard]>=0.128.0",
     "pdfminer-six>=20260107",
     "vertexai>=1.71.1",
+    "python-dotenv>=1.2.1",
+    "uvicorn[standard]>=0.29.0",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
-    "python-dotenv>=1.2.1",
     "reportlab>=4.2.0",
 ]
 
