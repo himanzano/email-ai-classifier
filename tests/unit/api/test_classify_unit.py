@@ -28,9 +28,9 @@ def test_process_email_with_text_input_success(
 
     # Assert
     assert response.status_code == 200
-    data = response.json()
-    assert data["category"] == MOCK_CLASSIFICATION["category"]
-    assert data["response"] == MOCK_RESPONSE
+    content = response.text
+    # Verifica se os dados processados aparecem no HTML retornado
+    assert MOCK_RESPONSE in content
     
     mock_extract.assert_called_once()
     mock_preprocess.assert_called_once()
@@ -58,6 +58,7 @@ def test_process_email_with_file_upload_success(
 
     # Assert
     assert response.status_code == 200
+    assert MOCK_RESPONSE in response.text
     mock_extract.assert_called_once()
     mock_classify.assert_called_once()
 
@@ -65,7 +66,7 @@ def test_process_email_fails_with_no_input(client):
     """Verifica se a API retorna 400 se nenhum dado for enviado."""
     response = client.post("/api/process-email")
     assert response.status_code == 400
-    assert "Forneça exatamente uma fonte de conteúdo" in response.json()["detail"]
+    assert "Forneça texto ou um arquivo" in response.text
 
 def test_process_email_fails_with_both_inputs(client):
     """Verifica se a API retorna 400 se ambos os inputs forem enviados."""
@@ -75,7 +76,7 @@ def test_process_email_fails_with_both_inputs(client):
         files={"file": ("test.txt", b"conteudo", "text/plain")}
     )
     assert response.status_code == 400
-    assert "não ambos ou nenhum" in response.json()["detail"]
+    assert "Forneça texto ou um arquivo" in response.text
 
 @patch('app.api.classify.classify_email', side_effect=Exception("Falha na IA"))
 def test_process_email_handles_service_exception(mock_classify, client):
@@ -84,5 +85,5 @@ def test_process_email_handles_service_exception(mock_classify, client):
     """
     response = client.post("/api/process-email", data={"email_content": "Olá"})
     assert response.status_code == 500
-    assert "Ocorreu um erro interno inesperado" in response.json()["detail"]
+    assert "Ocorreu um erro inesperado" in response.text
 

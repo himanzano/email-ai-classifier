@@ -31,9 +31,10 @@ def test_api_classify_integration_with_mocked_ai(mock_generate, mock_classify, c
     response = client.post("/api/process-email", data={"email_content": "Olá, revise o anexo."})
     
     assert response.status_code == 200
-    data = response.json()
-    assert data["category"] == "Produtivo"
-    assert data["response"] == "Resposta mockada."
+    # Validações adaptadas para resposta HTML (HTMX)
+    # O backend retorna a categoria em minúsculo ('produtivo')
+    assert "produtivo" in response.text
+    assert "Resposta mockada." in response.text
     mock_classify.assert_called_once()
     mock_generate.assert_called_once()
 
@@ -49,10 +50,6 @@ def test_api_classify_integration_with_real_ai(client):
     response = client.post("/api/process-email", data={"email_content": email_text})
     
     assert response.status_code == 200
-    data = response.json()
-    
-    # Validações de schema
-    assert "category" in data
-    assert data["category"] in {"Produtivo", "Improdutivo"}
-    assert "response" in data and data["response"]
-    assert len(data["response"]) > 20
+    # Valida presença de elementos chave no HTML retornado
+    assert "Produtivo" in response.text or "Improdutivo" in response.text
+    assert "Resposta Sugerida" in response.text

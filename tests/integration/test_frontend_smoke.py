@@ -26,7 +26,7 @@ def test_root_html_contains_key_elements(client):
     response = client.get("/")
     html_content = response.text
     
-    assert '<textarea id="email-content"' in html_content
-    assert '<button id="submit-btn"' in html_content
-    assert '<div id="result-section"' in html_content
-    assert 'Analisador de E-mails com IA' in html_content
+    assert 'id="email-content"' in html_content
+    assert 'id="process-email-btn"' in html_content
+    assert 'id="results-section"' in html_content
+    assert 'Classificador de Emails com IA' in html_content
