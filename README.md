@@ -54,7 +54,33 @@ uv run uvicorn app.main:app --reload --port 8080
 
 Acesse a interface em: `http://localhost:8080`
 
-### 3. Via Docker (Alternativa)
+### 3. Executando os Testes
+
+O projeto utiliza `pytest` para testes unitários e de integração.
+
+**Rodar todos os testes (padrão):**
+```bash
+uv run pytest
+```
+
+**Rodar apenas testes unitários:**
+```bash
+uv run pytest tests/unit
+```
+
+**Rodar testes de integração (mockados):**
+```bash
+uv run pytest tests/integration
+```
+
+**Rodar testes de integração com IA Real (Requer ADC configurado):**
+```bash
+RUN_INTEGRATION_TESTS=true uv run pytest tests/integration/api/test_classify_integration.py
+```
+
+Você pode definir essa variável de ambiente no arquivo `.env`
+
+### 4. Via Docker (Alternativa)
 
 ```bash
 docker build -t email-classifier .

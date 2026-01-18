@@ -6,11 +6,11 @@ from app.main import app
 
 # --- Condições para Pular o Teste de Integração Real ---
 
-USE_REAL_GEMINI = os.getenv("USE_REAL_GEMINI", "false").lower() == "true"
+RUN_INTEGRATION_TESTS = os.getenv("RUN_INTEGRATION_TESTS", "false").lower() == "true"
 GCP_IS_CONFIGURED = all(os.getenv(var) for var in ["GCP_PROJECT_ID", "GCP_LOCATION"])
 
 SKIP_REASON = (
-    "Teste de integração da API com IA real requer USE_REAL_GEMINI=true e "
+    "Teste de integração da API com IA real requer RUN_INTEGRATION_TESTS=true e "
     "configuração do GCP (PROJECT_ID, LOCATION, ADC)."
 )
 
@@ -39,11 +39,11 @@ def test_api_classify_integration_with_mocked_ai(mock_generate, mock_classify, c
     mock_generate.assert_called_once()
 
 @pytest.mark.integration
-@pytest.mark.skipif(not USE_REAL_GEMINI or not GCP_IS_CONFIGURED, reason=SKIP_REASON)
+@pytest.mark.skipif(not RUN_INTEGRATION_TESTS or not GCP_IS_CONFIGURED, reason=SKIP_REASON)
 def test_api_classify_integration_with_real_ai(client):
     """
     Teste de integração E2E: faz uma chamada real ao Vertex AI.
-    Só executa se a flag USE_REAL_GEMINI=true estiver ativa.
+    Só executa se a flag RUN_INTEGRATION_TESTS=true estiver ativa.
     """
     email_text = "Por favor, revise o relatório de vendas e aprove o orçamento até o final do dia."
     
@@ -51,5 +51,6 @@ def test_api_classify_integration_with_real_ai(client):
     
     assert response.status_code == 200
     # Valida presença de elementos chave no HTML retornado
-    assert "Produtivo" in response.text or "Improdutivo" in response.text
+    # O backend retorna a categoria em minúsculo
+    assert "produtivo" in response.text or "improdutivo" in response.text
     assert "Resposta Sugerida" in response.text
