@@ -31,7 +31,7 @@ A arquitetura foi desenhada priorizando performance, manutenibilidade e escalabi
 Clone o repositório e instale as dependências:
 
 ```bash
-git clone https://github.com/seu-usuario/email-ai-classifier.git
+git clone https://github.com/himanzano/email-ai-classifier.git
 cd email-ai-classifier
 uv sync
 ```
