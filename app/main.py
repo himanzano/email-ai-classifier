@@ -36,7 +36,7 @@ app = FastAPI(
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
     if exc.status_code == 404:
         return templates.TemplateResponse(
-            "404.html", {"request": request}, status_code=404
+            request, "404.html", {}, status_code=404
         )
     return await request.app.default_exception_handler(request, exc)
 
@@ -51,5 +51,5 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 @app.get("/", include_in_schema=False)
 async def root(request: Request):
     return templates.TemplateResponse(
-        "index.html", {"request": request, "active_method": "text"}
+        request, "index.html", {"active_method": "text"}
     )

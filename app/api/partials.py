@@ -12,8 +12,9 @@ async def get_input_method(request: Request, method: str):
     """
     if method in ["text", "file"]:
         return templates.TemplateResponse(
+            request,
             "partials/input_wrapper.html",
-            {"request": request, "active_method": method}
+            {"active_method": method}
         )
     return Response(content="Método inválido", status_code=400)
 
@@ -24,5 +25,5 @@ async def get_text_input_partial(request: Request):
     Retorna o template parcial contendo a área de texto e o contêiner de entrada.
     """
     return templates.TemplateResponse(
-        "partials/text_input.html", {"request": request, "active_method": "text"}
+        request, "partials/text_input.html", {"active_method": "text"}
     )
