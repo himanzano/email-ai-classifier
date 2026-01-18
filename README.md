@@ -2,6 +2,10 @@
 
 Este projeto é uma solução completa de engenharia de software para o desafio de triagem e resposta automatizada de e-mails corporativos. O sistema utiliza Inteligência Artificial Generativa (Google Gemini via Vertex AI) para classificar mensagens recebidas entre "Produtivas" e "Improdutivas" e sugerir respostas contextualizadas, reduzindo o tempo gasto em tarefas operacionais manuais.
 
+## Vídeo de Demonstração
+
+[Demo - Classificador de E-mails com IA](https://youtu.be/Mwn2zU60X88)
+
 ## Tecnologias Utilizadas
 
 A arquitetura foi desenhada priorizando performance, manutenibilidade e escalabilidade serverless.
