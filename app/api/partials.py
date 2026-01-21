@@ -12,9 +12,7 @@ async def get_input_method(request: Request, method: str):
     """
     if method in ["text", "file"]:
         return templates.TemplateResponse(
-            request,
-            "partials/input_wrapper.html",
-            {"active_method": method}
+            request, "partials/input_wrapper.html", {"active_method": method}
         )
     return Response(content="Método inválido", status_code=400)
 

@@ -5,7 +5,7 @@ from typing import Dict
 import vertexai
 from vertexai.generative_models import GenerativeModel, GenerationConfig
 
-# --- Configuração do Vertex AI ---_ 
+# --- Configuração do Vertex AI ---_
 # O ID do projeto e a localização são obtidos de variáveis de ambiente para
 # garantir portabilidade entre ambientes (local, dev, prod).
 PROJECT_ID = os.getenv("GCP_PROJECT_ID")
@@ -25,14 +25,18 @@ EMAIL_CLASSIFIER_PROMPT_PATH = os.path.join(PROMPT_DIR, "email_classifier.prompt
 # --- Erros Personalizados ---
 class InvalidResponseJsonError(ValueError):
     """Lançado quando a resposta da API não é um JSON válido."""
+
     pass
+
 
 class InvalidClassificationResponseError(ValueError):
     """Lançado quando o JSON da resposta não segue o schema esperado."""
+
     pass
 
 
 # --- Funções Auxiliares ---
+
 
 def _load_prompt(prompt_path: str) -> str:
     """Carrega o conteúdo de um arquivo de prompt."""
@@ -42,6 +46,7 @@ def _load_prompt(prompt_path: str) -> str:
     except FileNotFoundError:
         raise FileNotFoundError(f"Arquivo de prompt não encontrado em: {prompt_path}")
 
+
 def _validate_classification_response(response_data: Dict) -> None:
     """
     Valida o schema e os valores da resposta de classificação.
@@ -49,18 +54,25 @@ def _validate_classification_response(response_data: Dict) -> None:
     """
     required_keys = {"category", "confidence", "reason"}
     if not required_keys.issubset(response_data.keys()):
-        raise InvalidClassificationResponseError(f"A resposta JSON não contém as chaves necessárias: {required_keys}")
+        raise InvalidClassificationResponseError(
+            f"A resposta JSON não contém as chaves necessárias: {required_keys}"
+        )
 
     category = response_data.get("category")
     if category not in ["Produtivo", "Improdutivo"]:
-        raise InvalidClassificationResponseError(f"O valor de 'category' ('{category}') é inválido. Esperado: 'Produtivo' ou 'Improdutivo'.")
+        raise InvalidClassificationResponseError(
+            f"O valor de 'category' ('{category}') é inválido. Esperado: 'Produtivo' ou 'Improdutivo'."
+        )
 
     confidence = response_data.get("confidence")
     if not isinstance(confidence, (float, int)) or not (0.0 <= confidence <= 1.0):
-        raise InvalidClassificationResponseError(f"O valor de 'confidence' ('{confidence}') é inválido. Esperado: float entre 0.0 e 1.0.")
+        raise InvalidClassificationResponseError(
+            f"O valor de 'confidence' ('{confidence}') é inválido. Esperado: float entre 0.0 e 1.0."
+        )
 
 
 # --- Serviço de Classificação ---
+
 
 def classify_email(text: str) -> Dict:
     """
@@ -71,7 +83,7 @@ def classify_email(text: str) -> Dict:
 
     Returns:
         Um dicionário com a classificação, confiança e a justificativa.
-    
+
     Raises:
         InvalidResponseJsonError: Se a resposta da API não for um JSON válido.
         InvalidClassificationResponseError: Se o JSON da resposta for inválido.
@@ -87,9 +99,9 @@ def classify_email(text: str) -> Dict:
         temperature=0.0,  # Baixa temperatura para respostas mais determinísticas e consistentes
         response_mime_type="application/json",
     )
-    
+
     response = model.generate_content(prompt, generation_config=generation_config)
-    
+
     # 3. Extrair e fazer o parse da resposta
     try:
         # A resposta do Gemini com mime_type="application/json" já é um objeto JSON
@@ -97,9 +109,11 @@ def classify_email(text: str) -> Dict:
         response_text = response.text.strip()
         response_data = json.loads(response_text)
     except (json.JSONDecodeError, AttributeError) as e:
-        raise InvalidResponseJsonError(f"A resposta da API não pôde ser decodificada como JSON. Resposta: {response.text}") from e
+        raise InvalidResponseJsonError(
+            f"A resposta da API não pôde ser decodificada como JSON. Resposta: {response.text}"
+        ) from e
 
     # 4. Validar e retornar a resposta
     _validate_classification_response(response_data)
-    
+
     return response_data

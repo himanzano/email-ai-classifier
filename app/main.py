@@ -1,5 +1,13 @@
 import sys
 from pathlib import Path
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from dotenv import load_dotenv
+
+from app.api import classify as classify_api
+from app.api import partials as partials_api  # Rota para parciais de UI
+from app.config import templates  # Importa da configuração central
 
 # --- Configuração do Python Path ---
 # O comando `fastapi run app/main.py` não adiciona a raiz do projeto ao
@@ -8,16 +16,6 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
-from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
-from fastapi.exceptions import HTTPException
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from dotenv import load_dotenv
-
-# --- Importações de Módulos ---
-from app.api import classify as classify_api
-from app.api import partials as partials_api # Rota para parciais de UI
-from app.config import templates  # Importa da configuração central
 
 # --- Configuração Inicial ---
 BASE_DIR = project_root
@@ -28,21 +26,21 @@ load_dotenv(dotenv_path=ENV_PATH)
 app = FastAPI(
     title="Email AI Classifier",
     description="Uma aplicação completa para classificar e-mails e gerar respostas usando IA.",
-    version="1.0.0"
+    version="1.0.0",
 )
+
 
 # --- Handlers de Exceção ---
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
     if exc.status_code == 404:
-        return templates.TemplateResponse(
-            request, "404.html", {}, status_code=404
-        )
+        return templates.TemplateResponse(request, "404.html", {}, status_code=404)
     return await request.app.default_exception_handler(request, exc)
+
 
 # --- Montar Rotas e Arquivos Estáticos ---
 app.include_router(classify_api.router)
-app.include_router(partials_api.router) # Inclui o novo router
+app.include_router(partials_api.router)  # Inclui o novo router
 static_dir = BASE_DIR / "static"
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
@@ -50,6 +48,4 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 # --- Rota Principal ---
 @app.get("/", include_in_schema=False)
 async def root(request: Request):
-    return templates.TemplateResponse(
-        request, "index.html", {"active_method": "text"}
-    )
+    return templates.TemplateResponse(request, "index.html", {"active_method": "text"})

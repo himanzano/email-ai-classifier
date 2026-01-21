@@ -1,6 +1,6 @@
-import pytest
 from pathlib import Path
 from dotenv import load_dotenv
+
 
 def pytest_configure(config):
     """
@@ -9,7 +9,8 @@ def pytest_configure(config):
     """
     # Registrar marcador de integração
     config.addinivalue_line(
-        "markers", "integration: marca um teste como um teste de integração, que pode fazer chamadas reais a serviços externos."
+        "markers",
+        "integration: marca um teste como um teste de integração, que pode fazer chamadas reais a serviços externos.",
     )
 
     # Carregar variáveis de ambiente do .env

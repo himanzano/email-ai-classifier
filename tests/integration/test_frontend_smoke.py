@@ -2,11 +2,13 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
+
 @pytest.fixture
 def client():
     """Fixture que fornece um cliente de teste para a aplicação FastAPI."""
     with TestClient(app) as test_client:
         yield test_client
+
 
 @pytest.mark.integration
 def test_get_root_serves_html(client):
@@ -17,6 +19,7 @@ def test_get_root_serves_html(client):
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
 
+
 @pytest.mark.integration
 def test_root_html_contains_key_elements(client):
     """
@@ -25,8 +28,8 @@ def test_root_html_contains_key_elements(client):
     """
     response = client.get("/")
     html_content = response.text
-    
+
     assert 'id="email-content"' in html_content
     assert 'id="process-email-btn"' in html_content
     assert 'id="results-section"' in html_content
-    assert 'Classificador de Emails com IA' in html_content
+    assert "Classificador de Emails com IA" in html_content

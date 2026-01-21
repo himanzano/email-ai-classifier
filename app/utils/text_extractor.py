@@ -38,16 +38,16 @@ def extract_text(raw_content: Optional[str]) -> str:
     potential_path = raw_content.strip()
 
     # Decide o tipo de conteúdo e o processa.
-    if potential_path.endswith('.txt'):
+    if potential_path.endswith(".txt"):
         if os.path.isfile(potential_path):
             try:
-                with open(potential_path, 'r', encoding='utf-8') as f:
+                with open(potential_path, "r", encoding="utf-8") as f:
                     content_to_process = f.read()
             except (IOError, UnicodeDecodeError):
                 return ""
         else:
             return ""
-    elif potential_path.endswith('.pdf'):
+    elif potential_path.endswith(".pdf"):
         if os.path.isfile(potential_path):
             content_to_process = _extract_text_from_pdf(potential_path)
             # Se a extração do PDF falhar, retorna string vazia imediatamente.
@@ -58,13 +58,14 @@ def extract_text(raw_content: Optional[str]) -> str:
 
     # O conteúdo (de string, .txt ou .pdf) passa pelo pipeline de limpeza de HTML.
     # 1. Remove elementos <script> e <style>.
-    clean_text = re.sub(r'(?is)<(script|style).*?>.*?</\1>', '', content_to_process)
+    clean_text = re.sub(r"(?is)<(script|style).*?>.*?</\1>", "", content_to_process)
 
     # 2. Remove as tags HTML restantes.
-    clean_text = re.sub(r'<[^>]+>', '', clean_text)
+    clean_text = re.sub(r"<[^>]+>", "", clean_text)
 
     # 3. Decodifica entidades HTML.
     import html
+
     clean_text = html.unescape(clean_text)
 
     # Retorna o texto limpo, removendo espaços em branco no início/fim.

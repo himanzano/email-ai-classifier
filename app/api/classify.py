@@ -24,16 +24,24 @@ from app.utils.text_extractor import extract_text
 # --- Helper HTMXResponse (movido para cá) ---
 class HTMXResponse(HTMLResponse):
     def __init__(
-        self, request: Request, template_name: str, context: Optional[Dict[str, Any]] = None, **kwargs
+        self,
+        request: Request,
+        template_name: str,
+        context: Optional[Dict[str, Any]] = None,
+        **kwargs,
     ):
         toast_details = {
             key.replace("toast_", ""): value
             for key, value in kwargs.items()
             if key.startswith("toast_")
         }
-        kwargs = {key: value for key, value in kwargs.items() if not key.startswith("toast_")}
+        kwargs = {
+            key: value for key, value in kwargs.items() if not key.startswith("toast_")
+        }
 
-        if context is None: context = {}
+        if context is None:
+            context = {}
+
         context.setdefault("request", request)
         content = templates.get_template(template_name).render(context)
 
@@ -55,12 +63,16 @@ async def process_email_endpoint(
     email_content: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
 ):
-    if (email_content is None and file is None) or (email_content is not None and file is not None):
+    if (email_content is None and file is None) or (
+        email_content is not None and file is not None
+    ):
         return HTMXResponse(
-            request, "partials/error_display.html",
+            request,
+            "partials/error_display.html",
             context={"error_message": "Forneça texto ou um arquivo, não ambos."},
             status_code=400,
-            toast_type="error", toast_title="Erro de Validação",
+            toast_type="error",
+            toast_title="Erro de Validação",
             toast_description="É necessário enviar apenas uma fonte de conteúdo.",
         )
 
@@ -77,22 +89,27 @@ async def process_email_endpoint(
 
         if not raw_content.strip():
             return HTMXResponse(
-                request, "partials/error_display.html",
+                request,
+                "partials/error_display.html",
                 context={"error_message": "O conteúdo do e-mail está vazio."},
                 status_code=400,
-                toast_type="error", toast_title="Erro de Conteúdo",
+                toast_type="error",
+                toast_title="Erro de Conteúdo",
                 toast_description="O e-mail parece estar vazio ou não pôde ser lido.",
             )
 
-        processed_text = preprocess_text(raw_content, remove_stopwords=True, lemmatize=True)
+        processed_text = preprocess_text(
+            raw_content, remove_stopwords=True, lemmatize=True
+        )
         classification_result = classify_email(processed_text)
-        
+
         category_raw = classification_result["category"]
         suggested_response = generate_response(raw_content, category_raw)
         category_display = category_raw.lower()
 
         return HTMXResponse(
-            request, "partials/result_display.html",
+            request,
+            "partials/result_display.html",
             context={
                 "result": {
                     "category": category_display,
@@ -101,30 +118,39 @@ async def process_email_endpoint(
                     "suggested_response": suggested_response,
                 }
             },
-            toast_type="success", toast_title="E-mail Analisado",
+            toast_type="success",
+            toast_title="E-mail Analisado",
             toast_description=f"Classificado como '{category_display}'.",
         )
 
-    except (InvalidClassificationResponseError, InvalidResponseJsonError, InvalidGeneratedResponseError) as e:
+    except (
+        InvalidClassificationResponseError,
+        InvalidResponseJsonError,
+        InvalidGeneratedResponseError,
+    ) as e:
         return HTMXResponse(
-            request, "partials/error_display.html",
+            request,
+            "partials/error_display.html",
             context={
                 "error_message": f"Erro ao processar a resposta da IA: {e}",
-                "show_retry": True
+                "show_retry": True,
             },
             status_code=500,
-            toast_type="error", toast_title="Erro na IA",
+            toast_type="error",
+            toast_title="Erro na IA",
             toast_description="A resposta do modelo de IA foi inválida.",
         )
     except Exception as e:
         return HTMXResponse(
-            request, "partials/error_display.html",
+            request,
+            "partials/error_display.html",
             context={
                 "error_message": f"Ocorreu um erro inesperado: {e}",
-                "show_retry": True
+                "show_retry": True,
             },
             status_code=500,
-            toast_type="error", toast_title="Erro Inesperado",
+            toast_type="error",
+            toast_title="Erro Inesperado",
             toast_description="Não foi possível processar a solicitação.",
         )
     finally:

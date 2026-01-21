@@ -14,22 +14,29 @@ SKIP_REASON = (
     "configuração do GCP (PROJECT_ID, LOCATION, ADC)."
 )
 
+
 @pytest.fixture
 def client():
     """Fixture que fornece um cliente de teste para a aplicação FastAPI."""
     with TestClient(app) as test_client:
         yield test_client
 
+
 @pytest.mark.integration
-@patch('app.api.classify.classify_email', return_value={"category": "Produtivo", "confidence": 0.9, "reason": "Mock"})
-@patch('app.api.classify.generate_response', return_value="Resposta mockada.")
+@patch(
+    "app.api.classify.classify_email",
+    return_value={"category": "Produtivo", "confidence": 0.9, "reason": "Mock"},
+)
+@patch("app.api.classify.generate_response", return_value="Resposta mockada.")
 def test_api_classify_integration_with_mocked_ai(mock_generate, mock_classify, client):
     """
     Teste de integração da API: valida o fluxo HTTP e a orquestração
     dos serviços com a IA mockada. É o teste padrão em CI.
     """
-    response = client.post("/api/process-email", data={"email_content": "Olá, revise o anexo."})
-    
+    response = client.post(
+        "/api/process-email", data={"email_content": "Olá, revise o anexo."}
+    )
+
     assert response.status_code == 200
     # Validações adaptadas para resposta HTML (HTMX)
     # O backend retorna a categoria em minúsculo ('produtivo')
@@ -38,17 +45,20 @@ def test_api_classify_integration_with_mocked_ai(mock_generate, mock_classify, c
     mock_classify.assert_called_once()
     mock_generate.assert_called_once()
 
+
 @pytest.mark.integration
-@pytest.mark.skipif(not RUN_INTEGRATION_TESTS or not GCP_IS_CONFIGURED, reason=SKIP_REASON)
+@pytest.mark.skipif(
+    not RUN_INTEGRATION_TESTS or not GCP_IS_CONFIGURED, reason=SKIP_REASON
+)
 def test_api_classify_integration_with_real_ai(client):
     """
     Teste de integração E2E: faz uma chamada real ao Vertex AI.
     Só executa se a flag RUN_INTEGRATION_TESTS=true estiver ativa.
     """
     email_text = "Por favor, revise o relatório de vendas e aprove o orçamento até o final do dia."
-    
+
     response = client.post("/api/process-email", data={"email_content": email_text})
-    
+
     assert response.status_code == 200
     # Valida presença de elementos chave no HTML retornado
     # O backend retorna a categoria em minúsculo

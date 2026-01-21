@@ -9,32 +9,225 @@ from typing import Optional, Callable, List, Dict, Set, Union, overload, Literal
 # corpora de referência, podendo ser estendida conforme o domínio.
 
 _STOPWORDS_PT: Set[str] = {
-    'de', 'a', 'o', 'que', 'e', 'do', 'da', 'em', 'um', 'para', 'é', 'com', 'não',
-    'uma', 'os', 'no', 'se', 'na', 'por', 'mais', 'as', 'dos', 'como', 'mas', 'foi',
-    'ao', 'ele', 'das', 'tem', 'à', 'seu', 'sua', 'ou', 'ser', 'quando', 'muito',
-    'há', 'nos', 'já', 'está', 'eu', 'também', 'só', 'pelo', 'pela', 'até', 'isso',
-    'ela', 'entre', 'era', 'depois', 'sem', 'mesmo', 'aos', 'ter', 'seus', 'quem',
-    'nas', 'me', 'esse', 'eles', 'estão', 'você', 'tinha', 'foram', 'essa', 'num',
-    'nem', 'suas', 'meu', 'às', 'minha', 'numa', 'pelos', 'elas', 'havia', 'seja',
-    'qual', 'será', 'nós', 'tenho', 'lhe', 'deles', 'essas', 'esses', 'pelas',
-    'este', 'fosse', 'dele', 'tu', 'te', 'vocês', 'vos', 'lhes', 'meus', 'minhas',
-    'teu', 'tua', 'teus', 'tuas', 'nosso', 'nossa', 'nossos', 'nossas', 'dela',
-    'delas', 'esta', 'estes', 'estas', 'aquele', 'aquela', 'aqueles', 'aquelas',
-    'isto', 'aquilo', 'estou', 'está', 'estamos', 'estão', 'estive', 'esteve',
-    'estivemos', 'estiveram', 'estava', 'estávamos', 'estavam', 'estivera',
-    'estivéramos', 'esteja', 'estejamos', 'estejam', 'estivesse', 'estivéssemos',
-    'estivessem', 'estiver', 'estivermos', 'estiverem', 'hei', 'há', 'havemos',
-    'hão', 'houve', 'houvemos', 'houveram', 'houvera', 'houvéramos', 'haja',
-    'hajamos', 'hajam', 'houvesse', 'houvéssemos', 'houvessem', 'houver',
-    'houvermos', 'houverem', 'houverei', 'houverá', 'houveremos', 'houverão',
-    'houveria', 'houveríamos', 'houveriam', 'sou', 'somos', 'são', 'era', 'éramos',
-    'eram', 'fui', 'foi', 'fomos', 'foram', 'fora', 'fôramos', 'seja', 'sejamos',
-    'sejam', 'fosse', 'fôssemos', 'fossem', 'for', 'formos', 'forem', 'serei',
-    'será', 'seremos', 'serão', 'seria', 'seríamos', 'seriam', 'tenho', 'tem',
-    'temos', 'tém', 'tinha', 'tínhamos', 'tinham', 'tive', 'teve', 'tivemos',
-    'tiveram', 'tivera', 'tivéramos', 'tenha', 'tenhamos', 'tenham', 'tivesse',
-    'tivéssemos', 'tivessem', 'tiver', 'tivermos', 'tiverem', 'terei', 'terá',
-    'teremos', 'terão', 'teria', 'teríamos', 'teriam',
+    "de",
+    "a",
+    "o",
+    "que",
+    "e",
+    "do",
+    "da",
+    "em",
+    "um",
+    "para",
+    "é",
+    "com",
+    "não",
+    "uma",
+    "os",
+    "no",
+    "se",
+    "na",
+    "por",
+    "mais",
+    "as",
+    "dos",
+    "como",
+    "mas",
+    "foi",
+    "ao",
+    "ele",
+    "das",
+    "tem",
+    "à",
+    "seu",
+    "sua",
+    "ou",
+    "ser",
+    "quando",
+    "muito",
+    "há",
+    "nos",
+    "já",
+    "está",
+    "eu",
+    "também",
+    "só",
+    "pelo",
+    "pela",
+    "até",
+    "isso",
+    "ela",
+    "entre",
+    "era",
+    "depois",
+    "sem",
+    "mesmo",
+    "aos",
+    "ter",
+    "seus",
+    "quem",
+    "nas",
+    "me",
+    "esse",
+    "eles",
+    "estão",
+    "você",
+    "tinha",
+    "foram",
+    "essa",
+    "num",
+    "nem",
+    "suas",
+    "meu",
+    "às",
+    "minha",
+    "numa",
+    "pelos",
+    "elas",
+    "havia",
+    "seja",
+    "qual",
+    "será",
+    "nós",
+    "tenho",
+    "lhe",
+    "deles",
+    "essas",
+    "esses",
+    "pelas",
+    "este",
+    "fosse",
+    "dele",
+    "tu",
+    "te",
+    "vocês",
+    "vos",
+    "lhes",
+    "meus",
+    "minhas",
+    "teu",
+    "tua",
+    "teus",
+    "tuas",
+    "nosso",
+    "nossa",
+    "nossos",
+    "nossas",
+    "dela",
+    "delas",
+    "esta",
+    "estes",
+    "estas",
+    "aquele",
+    "aquela",
+    "aqueles",
+    "aquelas",
+    "isto",
+    "aquilo",
+    "estou",
+    "está",
+    "estamos",
+    "estão",
+    "estive",
+    "esteve",
+    "estivemos",
+    "estiveram",
+    "estava",
+    "estávamos",
+    "estavam",
+    "estivera",
+    "estivéramos",
+    "esteja",
+    "estejamos",
+    "estejam",
+    "estivesse",
+    "estivéssemos",
+    "estivessem",
+    "estiver",
+    "estivermos",
+    "estiverem",
+    "hei",
+    "há",
+    "havemos",
+    "hão",
+    "houve",
+    "houvemos",
+    "houveram",
+    "houvera",
+    "houvéramos",
+    "haja",
+    "hajamos",
+    "hajam",
+    "houvesse",
+    "houvéssemos",
+    "houvessem",
+    "houver",
+    "houvermos",
+    "houverem",
+    "houverei",
+    "houverá",
+    "houveremos",
+    "houverão",
+    "houveria",
+    "houveríamos",
+    "houveriam",
+    "sou",
+    "somos",
+    "são",
+    "era",
+    "éramos",
+    "eram",
+    "fui",
+    "foi",
+    "fomos",
+    "foram",
+    "fora",
+    "fôramos",
+    "seja",
+    "sejamos",
+    "sejam",
+    "fosse",
+    "fôssemos",
+    "fossem",
+    "for",
+    "formos",
+    "forem",
+    "serei",
+    "será",
+    "seremos",
+    "serão",
+    "seria",
+    "seríamos",
+    "seriam",
+    "tenho",
+    "tem",
+    "temos",
+    "tém",
+    "tinha",
+    "tínhamos",
+    "tinham",
+    "tive",
+    "teve",
+    "tivemos",
+    "tiveram",
+    "tivera",
+    "tivéramos",
+    "tenha",
+    "tenhamos",
+    "tenham",
+    "tivesse",
+    "tivéssemos",
+    "tivessem",
+    "tiver",
+    "tivermos",
+    "tiverem",
+    "terei",
+    "terá",
+    "teremos",
+    "terão",
+    "teria",
+    "teríamos",
+    "teriam",
 }
 
 _STOPWORD_LISTS: Dict[str, Set[str]] = {
@@ -52,6 +245,7 @@ _STOPWORD_LISTS: Dict[str, Set[str]] = {
 # completa de NLP (como NLTK ou spaCy), mas evita dependências externas.
 # Foi projetada para ser simples, previsível e extensível.
 
+
 def _lemmatize_token_pt(token: str) -> str:
     """
     Aplica regras simples e heurísticas de lematização para um token em português.
@@ -61,21 +255,23 @@ def _lemmatize_token_pt(token: str) -> str:
     # É mais específica que a regra do '-s', por isso vem primeiro.
     if token.endswith("ães"):
         return token[:-3] + "ão"
-    if len(token) >= 4 and token.endswith('es'):
+    if len(token) >= 4 and token.endswith("es"):
         return token[:-2]
 
     # Regra para plurais simples terminados em 's' (ex: carros -> carro, testes -> teste).
-    if len(token) > 3 and token.endswith('s') and not token.endswith('es'):
+    if len(token) > 3 and token.endswith("s") and not token.endswith("es"):
         return token[:-1]
 
     # Nenhuma regra correspondeu, retorna o token original.
     return token
 
+
 _LEMMATIZER_FUNCTIONS: Dict[str, Callable[[str], str]] = {
     "pt": _lemmatize_token_pt,
 }
 
-def _lemmatize_text(text: str, lang: str = 'pt') -> str:
+
+def _lemmatize_text(text: str, lang: str = "pt") -> str:
     """
     Aplica a lematização em todo o texto, token por token, usando a função
     apropriada para o idioma e preservando a pontuação final de cada token.
@@ -84,11 +280,11 @@ def _lemmatize_text(text: str, lang: str = 'pt') -> str:
     if not lemmatizer or not text:
         return text
 
-    words = text.split(' ')
+    words = text.split(" ")
     lemmatized_words = []
     for word in words:
         # Isola a palavra da pontuação final usando regex
-        match = re.match(r'^(\w+)([\W_]*)$', word)
+        match = re.match(r"^(\w+)([\W_]*)$", word)
         if match:
             token, punctuation = match.groups()
             lemmatized_token = lemmatizer(token)
@@ -97,7 +293,7 @@ def _lemmatize_text(text: str, lang: str = 'pt') -> str:
             # Se não houver correspondência (ex: uma string de pontuação pura), mantém o original
             lemmatized_words.append(word)
 
-    return ' '.join(lemmatized_words)
+    return " ".join(lemmatized_words)
 
 
 # --- Normalização de Entidades ---
@@ -107,6 +303,7 @@ def _lemmatize_text(text: str, lang: str = 'pt') -> str:
 # ajuda o modelo a generalizar e focar no contexto, em vez de memorizar valores específicos,
 # melhorando a precisão da classificação.
 
+
 def _normalize_numbers(text: str) -> str:
     """
     Substitui vários formatos de números por um token semântico <NUM>.
@@ -115,8 +312,8 @@ def _normalize_numbers(text: str) -> str:
     """
     # Regex para encontrar números, incluindo aqueles com separadores de milhar ([.,])
     # e parte decimal. Usa limites de palavra (\b) para evitar substituição dentro de outras palavras.
-    number_pattern = r'\b\d+(?:[.,]\d+)*\b'
-    return re.sub(number_pattern, '<NUM>', text)
+    number_pattern = r"\b\d+(?:[.,]\d+)*\b"
+    return re.sub(number_pattern, "<NUM>", text)
 
 
 # --- Tokenização ---
@@ -126,6 +323,7 @@ def _normalize_numbers(text: str) -> str:
 # contínuo em uma sequência discreta de itens que podem ser analisados,
 # vetorizados e processados individualmente.
 
+
 def tokenize_text(text: str) -> List[str]:
     """
     Tokeniza o texto, separando palavras e preservando tokens especiais.
@@ -133,48 +331,60 @@ def tokenize_text(text: str) -> List[str]:
     if not text.strip():
         return []
     # Regex para encontrar tokens especiais (ex: <NUM>) ou sequências de caracteres de palavras.
-    token_pattern = r'<[^>]+>\%?|\d+(?:[.,]\d+)*|\w+'
+    token_pattern = r"<[^>]+>\%?|\d+(?:[.,]\d+)*|\w+"
     return re.findall(token_pattern, text)
+
 
 # --- Etapas de Pré-processamento ---
 
 ProcessingStep = Callable[[str], str]
 
+
 def _to_lowercase(text: str) -> str:
-    special_tokens = re.findall(r'<[^>]+>\%?', text)
+    special_tokens = re.findall(r"<[^>]+>\%?", text)
     placeholders = [f"__PLACEHOLDER_{i}__" for i, _ in enumerate(special_tokens)]
-    
+
     temp_text = text
     for token, placeholder in zip(special_tokens, placeholders):
         temp_text = temp_text.replace(token, placeholder, 1)
-        
+
     temp_text_lowercased = temp_text.lower()
-    
+
     final_text = temp_text_lowercased
     for token, placeholder in zip(special_tokens, placeholders):
         final_text = final_text.replace(placeholder.lower(), token, 1)
-        
+
     return final_text
 
+
 def _remove_control_characters(text: str) -> str:
-    return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
+    return re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text)
+
 
 def _normalize_whitespace(text: str) -> str:
-    processed_text = re.sub(r'[ \t]+', ' ', text)
+    processed_text = re.sub(r"[ \t]+", " ", text)
     return processed_text.strip()
 
+
 def _remove_stopwords(text: str, stopwords: Set[str]) -> str:
-    words = text.split(' ')
+    words = text.split(" ")
     filtered_words = [word for word in words if word not in stopwords]
-    return ' '.join(filtered_words)
+    return " ".join(filtered_words)
+
 
 # --- Pipeline de Pré-processamento ---
+
 
 class TextPreprocessor:
     """
     Encapsula e executa um pipeline de pré-processamento de texto.
     """
-    def __init__(self, base_steps: Optional[List[ProcessingStep]] = None, stopword_lists: Optional[Dict[str, Set[str]]] = None):
+
+    def __init__(
+        self,
+        base_steps: Optional[List[ProcessingStep]] = None,
+        stopword_lists: Optional[Dict[str, Set[str]]] = None,
+    ):
         self.base_steps = base_steps or [
             _remove_control_characters,
             _normalize_whitespace,
@@ -182,12 +392,40 @@ class TextPreprocessor:
         self.stopword_lists = stopword_lists or _STOPWORD_LISTS
 
     @overload
-    def process(self, text: str, lowercase: bool = True, remove_stopwords: bool = False, lang: str = 'pt', lemmatize: bool = False, normalize_numbers: bool = False, *, tokenize: Literal[True]) -> List[str]: ...
+    def process(
+        self,
+        text: str,
+        lowercase: bool = True,
+        remove_stopwords: bool = False,
+        lang: str = "pt",
+        lemmatize: bool = False,
+        normalize_numbers: bool = False,
+        *,
+        tokenize: Literal[True],
+    ) -> List[str]: ...
 
     @overload
-    def process(self, text: str, lowercase: bool = True, remove_stopwords: bool = False, lang: str = 'pt', lemmatize: bool = False, normalize_numbers: bool = False, tokenize: Literal[False] = False) -> str: ...
+    def process(
+        self,
+        text: str,
+        lowercase: bool = True,
+        remove_stopwords: bool = False,
+        lang: str = "pt",
+        lemmatize: bool = False,
+        normalize_numbers: bool = False,
+        tokenize: Literal[False] = False,
+    ) -> str: ...
 
-    def process(self, text: str, lowercase: bool = True, remove_stopwords: bool = False, lang: str = 'pt', lemmatize: bool = False, normalize_numbers: bool = False, tokenize: bool = False) -> Union[str, List[str]]:
+    def process(
+        self,
+        text: str,
+        lowercase: bool = True,
+        remove_stopwords: bool = False,
+        lang: str = "pt",
+        lemmatize: bool = False,
+        normalize_numbers: bool = False,
+        tokenize: bool = False,
+    ) -> Union[str, List[str]]:
         """
         Aplica o pipeline de processamento, com opções configuráveis.
         """
@@ -208,7 +446,7 @@ class TextPreprocessor:
             stopwords_to_remove = self.stopword_lists.get(lang)
             if stopwords_to_remove:
                 processed_text = _remove_stopwords(processed_text, stopwords_to_remove)
-        
+
         if lemmatize:
             processed_text = _lemmatize_text(processed_text, lang=lang)
 
@@ -217,17 +455,43 @@ class TextPreprocessor:
 
         return processed_text
 
+
 # --- Função Pública ---
 
 _default_preprocessor = TextPreprocessor()
 
-@overload
-def preprocess_text(text: Optional[str], lowercase: bool = True, remove_stopwords: bool = False, lemmatize: bool = False, normalize_numbers: bool = False, *, tokenize: Literal[True]) -> List[str]: ...
 
 @overload
-def preprocess_text(text: Optional[str], lowercase: bool = True, remove_stopwords: bool = False, lemmatize: bool = False, normalize_numbers: bool = False, tokenize: Literal[False] = False) -> str: ...
+def preprocess_text(
+    text: Optional[str],
+    lowercase: bool = True,
+    remove_stopwords: bool = False,
+    lemmatize: bool = False,
+    normalize_numbers: bool = False,
+    *,
+    tokenize: Literal[True],
+) -> List[str]: ...
 
-def preprocess_text(text: Optional[str], lowercase: bool = True, remove_stopwords: bool = False, lemmatize: bool = False, normalize_numbers: bool = False, tokenize: bool = False) -> Union[str, List[str]]:
+
+@overload
+def preprocess_text(
+    text: Optional[str],
+    lowercase: bool = True,
+    remove_stopwords: bool = False,
+    lemmatize: bool = False,
+    normalize_numbers: bool = False,
+    tokenize: Literal[False] = False,
+) -> str: ...
+
+
+def preprocess_text(
+    text: Optional[str],
+    lowercase: bool = True,
+    remove_stopwords: bool = False,
+    lemmatize: bool = False,
+    normalize_numbers: bool = False,
+    tokenize: bool = False,
+) -> Union[str, List[str]]:
     """
     Função pública para pré-processar um texto usando o pipeline padrão.
 
@@ -244,12 +508,12 @@ def preprocess_text(text: Optional[str], lowercase: bool = True, remove_stopword
     """
     if not isinstance(text, str):
         return [] if tokenize else ""
-    
+
     return _default_preprocessor.process(
         text,
         lowercase=lowercase,
         remove_stopwords=remove_stopwords,
         lemmatize=lemmatize,
         normalize_numbers=normalize_numbers,
-        tokenize=tokenize
+        tokenize=tokenize,
     )

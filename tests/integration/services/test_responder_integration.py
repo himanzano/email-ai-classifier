@@ -5,11 +5,10 @@ from app.services.responder import generate_response
 # --- Condições para Pular o Teste de Integração ---
 
 RUN_INTEGRATION_TESTS = os.getenv("RUN_INTEGRATION_TESTS", "false").lower() == "true"
-GCP_IS_CONFIGURED = all(os.getenv(var) for var in [
-    "GCP_PROJECT_ID",
-    "GCP_LOCATION",
-    "GOOGLE_APPLICATION_CREDENTIALS"
-])
+GCP_IS_CONFIGURED = all(
+    os.getenv(var)
+    for var in ["GCP_PROJECT_ID", "GCP_LOCATION", "GOOGLE_APPLICATION_CREDENTIALS"]
+)
 
 SKIP_REASON = (
     "Teste de integração do responder requer RUN_INTEGRATION_TESTS=true e as variáveis "
@@ -18,8 +17,11 @@ SKIP_REASON = (
 
 # --- Teste de Integração ---
 
+
 @pytest.mark.integration
-@pytest.mark.skipif(not (RUN_INTEGRATION_TESTS and GCP_IS_CONFIGURED), reason=SKIP_REASON)
+@pytest.mark.skipif(
+    not (RUN_INTEGRATION_TESTS and GCP_IS_CONFIGURED), reason=SKIP_REASON
+)
 @pytest.mark.parametrize("category", ["Produtivo", "Improdutivo"])
 def test_generate_response_vertex_ai_integration(category):
     """
@@ -53,4 +55,6 @@ def test_generate_response_vertex_ai_integration(category):
     # Aqui, apenas garantimos que o retorno não é nulo/vazio.
     assert response, "A resposta gerada não pode ser nula ou vazia."
     assert isinstance(response, str), "O tipo de retorno deve ser uma string."
-    assert len(response) > 20, "A resposta gerada deve ter um comprimento mínimo razoável."
+    assert len(response) > 20, (
+        "A resposta gerada deve ter um comprimento mínimo razoável."
+    )

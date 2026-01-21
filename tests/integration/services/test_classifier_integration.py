@@ -4,6 +4,7 @@ from app.services.classifier import classify_email
 
 # --- Teste de Integração para o Classificador com Vertex AI ---
 
+
 @pytest.mark.integration
 def test_classify_email_vertex_ai_integration():
     """
@@ -58,12 +59,20 @@ def test_classify_email_vertex_ai_integration():
     # adere ao schema esperado.
     assert response is not None, "A resposta da API não pode ser nula."
     assert "category" in response, "A resposta deve conter a chave 'category'."
-    assert response["category"] in {"Produtivo", "Improdutivo"}, \
+    assert response["category"] in {"Produtivo", "Improdutivo"}, (
         f"A categoria '{response['category']}' não é um valor válido."
+    )
 
     assert "confidence" in response, "A resposta deve conter a chave 'confidence'."
-    assert isinstance(response["confidence"], (float, int)), "A confiança deve ser um número."
-    assert 0.0 <= response["confidence"] <= 1.0, "O valor de confiança deve estar entre 0.0 e 1.0."
+    assert isinstance(response["confidence"], (float, int)), (
+        "A confiança deve ser um número."
+    )
+    assert 0.0 <= response["confidence"] <= 1.0, (
+        "O valor de confiança deve estar entre 0.0 e 1.0."
+    )
 
-    assert "reason" in response and isinstance(response["reason"], str) and response["reason"], \
-        "A resposta deve conter uma justificativa (reason) em string e não-vazia."
+    assert (
+        "reason" in response
+        and isinstance(response["reason"], str)
+        and response["reason"]
+    ), "A resposta deve conter uma justificativa (reason) em string e não-vazia."

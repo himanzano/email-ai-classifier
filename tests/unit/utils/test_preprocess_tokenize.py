@@ -13,12 +13,13 @@ class TestTokenizeTextFunction:
             # 1. Casos básicos
             ("Olá mundo, tudo bem?", ["Olá", "mundo", "tudo", "bem"]),
             ("Texto simples sem pontuação", ["Texto", "simples", "sem", "pontuação"]),
-            
             # 2. Preservação de acentos e tokens especiais
             ("A taxa de juros é 15%.", ["A", "taxa", "de", "juros", "é", "15"]),
             ("O valor é R$ 100,00.", ["O", "valor", "é", "R", "100,00"]),
-            ("Processando tokens como <NUM> e <NUM>%.", ["Processando", "tokens", "como", "<NUM>", "e", "<NUM>%"]),
-            
+            (
+                "Processando tokens como <NUM> e <NUM>%.",
+                ["Processando", "tokens", "como", "<NUM>", "e", "<NUM>%"],
+            ),
             # 3. Casos de borda
             ("", []),
             ("   ", []),
@@ -27,7 +28,7 @@ class TestTokenizeTextFunction:
             ("palavras-hifenizadas", ["palavras", "hifenizadas"]),
             ("multiplos   espaços", ["multiplos", "espaços"]),
             ("texto\ncom\nquebra de linha", ["texto", "com", "quebra", "de", "linha"]),
-        ]
+        ],
     )
     def test_tokenize_scenarios(self, input_text, expected_tokens):
         """Testa a tokenização em vários cenários."""
@@ -57,14 +58,14 @@ class TestTokenizationInPipeline:
         Valida se a tokenização ocorre após todas as outras etapas de pré-processamento.
         """
         input_text = "  O VALOR de R$ 1.234,56 foi APROVADO para estas casas."
-        
+
         # Execução do pipeline completo com tokenização
         tokenized_result = preprocess_text(
             input_text,
             remove_stopwords=True,
             lemmatize=True,
             normalize_numbers=True,
-            tokenize=True
+            tokenize=True,
         )
 
         # Resultado esperado após todas as etapas (antes da tokenização)
@@ -83,8 +84,8 @@ class TestTokenizationInPipeline:
             ("Texto com <NUM>%.", False, "texto com <NUM>%."),
             ("Texto com <NUM>%.", True, ["texto", "com", "<NUM>%"]),
             ("  Muitos   espaços  ", True, ["muitos", "espaços"]),
-            ("\nLinhas\ndiferentes\n", True, ["linhas", "diferentes"])
-        ]
+            ("\nLinhas\ndiferentes\n", True, ["linhas", "diferentes"]),
+        ],
     )
     def test_pipeline_with_edge_cases(self, input_text, tokenize, expected_output):
         """

@@ -18,12 +18,12 @@ EMAIL_PIPELINE_CASES = [
         # Categoria Esperada (para verificação de consistência)
         "Produtivo",
         # ID do Teste
-        id="productive_urgent_system_failure_html"
+        id="productive_urgent_system_failure_html",
     ),
     pytest.param(
         "Lembrete: sua reunião de acompanhamento semanal do projeto 'Atlas' começa em 15 minutos. Link na descrição.",
         "Improdutivo",
-        id="improductive_meeting_reminder_plain"
+        id="improductive_meeting_reminder_plain",
     ),
     pytest.param(
         """
@@ -32,17 +32,17 @@ EMAIL_PIPELINE_CASES = [
         <p>Nenhuma ação é necessária de sua parte. Agradecemos a preferência!</p>
         """,
         "Improdutivo",
-        id="improductive_order_confirmation_html"
+        id="improductive_order_confirmation_html",
     ),
     pytest.param(
         "Colegas, poderiam por favor revisar a documentação da nova API de pagamentos? O prazo para feedback é amanhã, e a opinião de vocês é fundamental para a aprovação final do documento.",
         "Produtivo",
-        id="productive_document_review_request_plain"
+        id="productive_document_review_request_plain",
     ),
     pytest.param(
         "Apenas para informar: a manutenção programada no servidor de DEV ocorrerá neste sábado, das 2h às 4h da manhã. O ambiente ficará indisponível durante essa janela.",
         "Improdutivo",
-        id="improductive_maintenance_warning_plain"
+        id="improductive_maintenance_warning_plain",
     ),
 ]
 
@@ -57,8 +57,11 @@ SKIP_REASON = (
 
 # --- Teste de Integração de Pipeline Completo ---
 
+
 @pytest.mark.integration
-@pytest.mark.skipif(not (RUN_INTEGRATION_TESTS and GCP_CONFIG_IS_SET), reason=SKIP_REASON)
+@pytest.mark.skipif(
+    not (RUN_INTEGRATION_TESTS and GCP_CONFIG_IS_SET), reason=SKIP_REASON
+)
 @pytest.mark.parametrize("raw_email_content, expected_category", EMAIL_PIPELINE_CASES)
 def test_full_classification_pipeline(raw_email_content, expected_category):
     """
@@ -70,16 +73,17 @@ def test_full_classification_pipeline(raw_email_content, expected_category):
     """
     # Etapa 1: Extrair texto puro do conteúdo bruto.
     text = extract_text(raw_email_content)
-    assert text and text.strip(), "A extração de texto não deveria resultar em uma string vazia."
+    assert text and text.strip(), (
+        "A extração de texto não deveria resultar em uma string vazia."
+    )
 
     # Etapa 2: Pré-processar o texto extraído.
     processed_text = preprocess_text(
-        text,
-        remove_stopwords=True,
-        lemmatize=True,
-        normalize_numbers=True
+        text, remove_stopwords=True, lemmatize=True, normalize_numbers=True
     )
-    assert processed_text and processed_text.strip(), "O pré-processamento não deveria resultar em uma string vazia."
+    assert processed_text and processed_text.strip(), (
+        "O pré-processamento não deveria resultar em uma string vazia."
+    )
 
     # Etapa 3: Executar a chamada real à API com o texto pré-processado.
     try:
@@ -93,15 +97,23 @@ def test_full_classification_pipeline(raw_email_content, expected_category):
     # Etapa 4: Validar o contrato e a consistência da resposta da API.
     assert response is not None, "A resposta da API não pode ser nula."
     assert "category" in response, "A resposta deve conter a chave 'category'."
-    assert response["category"] in {"Produtivo", "Improdutivo"}, \
+    assert response["category"] in {"Produtivo", "Improdutivo"}, (
         f"A categoria '{response['category']}' não é um valor válido."
-    
-    assert "confidence" in response, "A resposta deve conter a chave 'confidence'."
-    assert isinstance(response["confidence"], (float, int)), "A confiança deve ser um número."
-    assert 0.0 <= response["confidence"] <= 1.0, "O valor de confiança deve estar entre 0.0 e 1.0."
+    )
 
-    assert "reason" in response and isinstance(response["reason"], str) and response["reason"], \
-        "A resposta deve conter uma justificativa (reason) em string e não-vazia."
+    assert "confidence" in response, "A resposta deve conter a chave 'confidence'."
+    assert isinstance(response["confidence"], (float, int)), (
+        "A confiança deve ser um número."
+    )
+    assert 0.0 <= response["confidence"] <= 1.0, (
+        "O valor de confiança deve estar entre 0.0 e 1.0."
+    )
+
+    assert (
+        "reason" in response
+        and isinstance(response["reason"], str)
+        and response["reason"]
+    ), "A resposta deve conter uma justificativa (reason) em string e não-vazia."
 
     # Validação de consistência: Para exemplos claros, a categoria deve ser a esperada.
     # Isso atua como um "teste de fumaça" para a lógica do prompt e do modelo.
